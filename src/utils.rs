@@ -29,7 +29,7 @@ pub(crate) unsafe fn replace_all_placeholders(original: &str, mapping: &HashMap<
     new_string.to_string()
 }
 
-pub fn get_keys(string: &str) -> HashSet<String> {
+pub fn get_placeholders(string: &str) -> HashSet<String> {
     RE.captures_iter(string)
         .map(|captures| strip_format(&captures[0]).to_string())
         .collect()
@@ -38,21 +38,21 @@ pub fn get_keys(string: &str) -> HashSet<String> {
 #[cfg(test)]
 mod util_tests {
     use std::collections::{HashMap, HashSet};
-    use crate::utils::{get_keys, replace_all_placeholders};
+    use crate::utils::{get_placeholders, replace_all_placeholders};
 
     #[test]
     fn test_get_keys() {
         let string = "{[a]}";
-        let keys = get_keys(string);
+        let keys = get_placeholders(string);
         let expect_keys = HashSet::from(["a".to_string()]);
         assert_eq!(expect_keys, keys);
 
         let string = "{[a\n]}";
-        let keys = get_keys(string);
+        let keys = get_placeholders(string);
         assert_eq!(0, keys.len());
 
         let string = "{[a]}    {[b]}";
-        let keys = get_keys(string);
+        let keys = get_placeholders(string);
         let expect_keys = HashSet::from(["a".to_string(), "b".to_string()]);
         assert_eq!(expect_keys, keys);
     }
@@ -60,7 +60,7 @@ mod util_tests {
     #[test]
     fn test_replace(){
         let string = "{[a]} and {[b]} and {[a]}";
-        let keys = get_keys(string);
+        let keys = get_placeholders(string);
         let expect_keys = HashSet::from(["a".to_string(), "b".to_string()]);
         assert_eq!(expect_keys, keys);
         let mapping = HashMap::from([

@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use serde_json::{Map, Value};
 use crate::prompt::errors::{PlaceholderNotExist, UnfilledPlaceholders};
-use crate::utils::{get_keys, replace_all_placeholders};
+use crate::utils::{get_placeholders, replace_all_placeholders};
 use log::warn;
 
 pub type JsonMap = Map<String, Value>;
@@ -59,17 +59,17 @@ impl PromptTemplate {
     }
 
     pub fn with_metadata(template: String, metadata: JsonMap) -> Self {
-        let keys = get_keys(&template);
-        if keys.len() == 0 {
-            warn!("Your prompt template does not have a key. If this is intended, ignore this message. \
-            Otherwise, check whether you have written keys correctly.\n\
+        let placeholders = get_placeholders(&template);
+        if placeholders.len() == 0 {
+            warn!("Your prompt template does not have a placeholder. If this is intended, ignore this message. \
+            Otherwise, check whether you have written placeholders correctly.\n\
             Got prompt template:\n\
             {}", template);
         }
         Self {
             template: Arc::new(template),
             meta_data: Arc::new(metadata),
-            placeholders: keys,
+            placeholders,
         }
     }
 
