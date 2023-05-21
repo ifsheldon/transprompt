@@ -8,3 +8,6 @@ authors = ["feng liang <feng.liang@kaust.edu.sa>"]
 
 [dependencies]
 serde_json = "~1.0"
+regex = "1"
+lazy_static = "1.4.0"
+log = "0.4"
