@@ -12,3 +12,8 @@ regex = "1"
 lazy_static = "1.4.0"
 log = "0.4"
 anyhow = "~1.0"
+url = "~2.3"
+# Generative Agent - virtual time
+chrono = "0.4.24"
+# Database related
+qdrant-client = "~1.1"
