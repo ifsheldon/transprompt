@@ -1,3 +1,6 @@
+pub mod vec_stores;
+pub mod retrievers;
+
 use std::collections::{HashMap, HashSet};
 use regex::{Captures, Regex};
 use lazy_static::lazy_static;
