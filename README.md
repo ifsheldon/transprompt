@@ -11,6 +11,7 @@ LLM programming, a fancy alternative of prompt engineering, starts with prompts,
 data-driven if you come from software engineering).
 
 ## Concepts and Design
+The overall of `transprompt` follows data-driven design. The APIs are designed to be as explicit as possible, so users should easily track every step that composes a prompt. The API hierarchy also aims to be as flat as possible.
 
 ### Prompt Template and Placeholder
 
@@ -62,10 +63,10 @@ concurrent fillers in multiple stages.
 The endpoint of `PromptTemplate -> PartialPrompt -> complete prompt (a String)` pipeline is LLM, which consumes a prompt
 and produces a reply.
 
-You can do any post-processing of the reply, but we will leave that in utilities.
+You can do any post-processing on the reply, but we will leave that in utilities.
 
 Or, you can even kick off another pipeline that transforms a prompt template with fillers, so then the endpoint is a new
-start.
+start!
 
 ### Application or Agent or Whatever
 
