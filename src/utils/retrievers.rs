@@ -97,7 +97,6 @@ pub mod generative_agents {
 
 #[cfg(test)]
 mod test_retrievers {
-    use chrono::{NaiveDate};
     use crate::utils::retrievers::generative_agents::create_virtual_time;
 
     #[test]
