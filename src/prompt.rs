@@ -31,7 +31,7 @@ impl PartialPrompt {
         }
     }
 
-    pub fn finish(&self) -> Result<String, UnfilledPlaceholders> {
+    pub fn complete(&self) -> Result<String, UnfilledPlaceholders> {
         if self.unfilled_placeholders.is_empty() {
             let template = self.template.str();
             let prompt = unsafe { replace_all_placeholders(template, &self.placeholder_to_vals) };

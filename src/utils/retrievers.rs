@@ -52,7 +52,7 @@ pub mod generative_agents {
             let prompt = self.ask_importance_template
                 .construct_prompt()
                 .fill("event", event)
-                .finish()
+                .complete()
                 .unwrap();
             todo!()
         }
