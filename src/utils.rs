@@ -3,24 +3,24 @@ use regex::{Captures, Regex};
 use lazy_static::lazy_static;
 
 lazy_static! {
-    static ref RE: Regex = Regex::new(r"\{\[.*?\]\}").unwrap();
+    static ref PLACEHOLDER_MATCH_RE: Regex = Regex::new(r"\{\[.*?\]\}").unwrap();
 }
 
 #[inline]
 fn strip_format(key: &str) -> &str {
     //! Strips "{\[" and "\]}" for a string, which is algorithmically unsafe.
     //! Ensure the string is properly formatted like "{\[a\]}".
-    &key[2..key.len()-2]
+    &key[2..key.len() - 2]
 }
 
-pub(crate) unsafe fn replace_all_placeholders(original: &str, mapping: &HashMap<String, Option<String>>) -> String{
+pub(crate) unsafe fn replace_all_placeholders(original: &str, mapping: &HashMap<String, Option<String>>) -> String {
     //! Replaces all placeholders with mappings.
     //!
     //! Safety:
     //! * Must ensure all keys in the string are in the mapping
     //! * Must ensure all entries in the mapping is Some
     //!
-    let new_string = RE.replace_all(original, |captures: &Captures|{
+    let new_string = PLACEHOLDER_MATCH_RE.replace_all(original, |captures: &Captures| {
         let match_text = &captures[0];
         let key = strip_format(match_text);
         let replacement = mapping.get(key).unwrap_unchecked().as_ref().unwrap_unchecked();
@@ -30,7 +30,7 @@ pub(crate) unsafe fn replace_all_placeholders(original: &str, mapping: &HashMap<
 }
 
 pub fn get_placeholders(string: &str) -> HashSet<String> {
-    RE.captures_iter(string)
+    PLACEHOLDER_MATCH_RE.captures_iter(string)
         .map(|captures| strip_format(&captures[0]).to_string())
         .collect()
 }
@@ -58,7 +58,7 @@ mod util_tests {
     }
 
     #[test]
-    fn test_replace(){
+    fn test_replace() {
         let string = "{[a]} and {[b]} and {[a]}";
         let keys = get_placeholders(string);
         let expect_keys = HashSet::from(["a".to_string(), "b".to_string()]);
