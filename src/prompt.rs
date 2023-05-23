@@ -2,14 +2,16 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use serde_json::{Map, Value};
 use crate::prompt::errors::{PlaceholderNotExist, UnfilledPlaceholders};
-use crate::utils::string::{get_placeholders, replace_all_placeholders};
+use crate::utils::string::{CountToken, get_placeholders, PromptTokenCountCache, replace_all_placeholders};
 use log::warn;
 
 pub type JsonMap = Map<String, Value>;
 
 
 #[derive(Debug, Clone)]
+#[readonly::make]
 pub struct PartialPrompt {
+    #[readonly]
     pub template: PromptTemplate,
     pub(crate) placeholder_to_vals: HashMap<String, Option<String>>,
     pub(crate) unfilled_placeholders: HashSet<String>,
@@ -27,8 +29,12 @@ impl PartialPrompt {
             self.placeholder_to_vals.insert(placeholder, Some(value.into()));
             Ok(self)
         } else {
-            Err(PlaceholderNotExist::new(placeholder, value.into(), self.placeholder_to_vals.keys()))
+            Err(PlaceholderNotExist::new(placeholder, value.into(), &self.template.placeholders))
         }
+    }
+
+    pub fn with_counter_cache<'a, C: CountToken>(&'a self, counter: &'a C) -> PromptTokenCountCache<'a, C> {
+        PromptTokenCountCache::new(self, counter)
     }
 
     pub fn complete(&self) -> Result<String, UnfilledPlaceholders> {
@@ -38,7 +44,7 @@ impl PartialPrompt {
             Ok(prompt)
         } else {
             Err(UnfilledPlaceholders {
-                all_placeholders: self.template.placeholders().iter().map(Clone::clone).collect(),
+                all_placeholders: self.template.placeholders.iter().map(Clone::clone).collect(),
                 unfilled_placeholders: self.unfilled_placeholders.iter().map(|s| (*s).clone()).collect(),
             })
         }
@@ -47,10 +53,13 @@ impl PartialPrompt {
 
 
 #[derive(Debug, Clone)]
+#[readonly::make]
 pub struct PromptTemplate {
-    pub meta_data: Arc<JsonMap>,
     template: Arc<String>,
-    placeholders: HashSet<String>,
+    #[readonly]
+    pub placeholders: HashSet<String>,
+    #[readonly]
+    pub meta_data: Arc<JsonMap>,
 }
 
 impl PromptTemplate {
@@ -78,11 +87,6 @@ impl PromptTemplate {
         &self.template
     }
 
-    #[inline]
-    pub fn placeholders(&self) -> &HashSet<String> {
-        &self.placeholders
-    }
-
     pub fn construct_prompt(&self) -> PartialPrompt {
         PartialPrompt {
             template: self.clone(),
@@ -93,7 +97,7 @@ impl PromptTemplate {
 }
 
 pub mod errors {
-    use std::collections::hash_map::Keys;
+    use std::collections::HashSet;
     use std::error::Error;
     use std::fmt;
     use std::fmt::Formatter;
@@ -123,8 +127,8 @@ pub mod errors {
     impl PlaceholderNotExist {
         pub(crate) fn new(try_fill_placeholder: String,
                           value: String,
-                          available_placeholders: Keys<'_, String, Option<String>>) -> Self {
-            let available_placeholders = available_placeholders.map(|k| k.clone()).collect();
+                          available_placeholders: &HashSet<String>) -> Self {
+            let available_placeholders = available_placeholders.iter().map(|k| k.clone()).collect();
             PlaceholderNotExist {
                 try_fill_placeholder,
                 value,
