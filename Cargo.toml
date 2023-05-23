@@ -20,3 +20,5 @@ chrono = "0.4.24"
 qdrant-client = "~1.1"
 # Token related
 tiktoken-rs = { version = "~0.4", features = ["async-openai"] }
+# LLM
+async-openai = "~0.10"
