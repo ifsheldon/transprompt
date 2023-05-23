@@ -2,6 +2,22 @@ use std::collections::{HashMap, HashSet};
 use regex::{Captures, Regex};
 use lazy_static::lazy_static;
 
+
+pub trait CountToken {
+    fn count_token(&self, string: &str) -> usize;
+}
+
+impl<F> CountToken for F where F: Fn(&str) -> usize {
+    fn count_token(&self, string: &str) -> usize {
+        self(string)
+    }
+}
+
+pub fn count_tokens_by_len(string: &str) -> usize {
+    string.len()
+}
+
+
 lazy_static! {
     static ref PLACEHOLDER_MATCH_RE: Regex = Regex::new(r"\{\[.*?\]\}").unwrap();
 }
