@@ -9,7 +9,7 @@ Prompt-centric framework for developing LLM applications in Rust
 Because I'm done with layers of object-oriented abstraction that are mixed with inheritance hierarchies and methods that
 are overloaded and overridden from nowhere.
 
-LLM programming, a fancy alternative of prompt engineering, starts with prompts, so it should be prompt-centric (or
+LLM programming, a fancy name of prompt engineering, starts with prompts, so it should be prompt-centric (or
 data-driven if you come from software engineering).
 
 ## Concepts and Design
