@@ -1,3 +1,5 @@
+pub mod tiktoken;
+
 use std::collections::{HashMap, HashSet};
 use crate::prompt::errors::PlaceholderNotExist;
 use crate::prompt::PartialPrompt;

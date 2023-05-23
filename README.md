@@ -88,7 +88,7 @@ Sorted from top to down by importance:
 - [ ] Utilities including
     - [ ] Simple JSON postprocessing
     - [ ] Frequently used applications/agents
-    - [ ] Token counting utils
+    - [x] Token counting utils: Now only basic tiktoken support
 - [ ] Examples
 - [ ] Future engineering improvements like advance compile time checking or type system dance
 - [ ] Python counterpart?
