@@ -1,12 +1,10 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
-use serde_json::{Map, Value};
 use crate::prompt::errors::{PlaceholderNotExist, UnfilledPlaceholders};
 use crate::utils::string::{get_placeholders, replace_all_placeholders};
 use crate::utils::token::{CountToken, PromptTokenCountCache};
 use log::warn;
-
-pub type JsonMap = Map<String, Value>;
+use crate::utils::JsonMap;
 
 
 #[derive(Debug, Clone)]
