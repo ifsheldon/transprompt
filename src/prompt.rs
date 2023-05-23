@@ -37,6 +37,13 @@ impl PartialPrompt {
         PromptTokenCountCache::new(self, counter)
     }
 
+    pub fn current_token_num(&self, counter: &impl CountToken) -> usize {
+        let mapping: HashMap<String, String> = self.placeholder_to_vals.iter().filter_map(|(p, v)| {
+            v.as_ref().and_then(|v| Some((p.clone(), v.clone())))
+        }).collect();
+        PromptTokenCountCache::new(self, counter).attempt_fill_multiple_and_count(&mapping).unwrap()
+    }
+
     pub fn complete(&self) -> Result<String, UnfilledPlaceholders> {
         if self.unfilled_placeholders.is_empty() {
             let template = self.template.str();
