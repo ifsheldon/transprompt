@@ -15,6 +15,7 @@ impl<F> CountToken for F where F: Fn(&str) -> usize {
     }
 }
 
+#[inline]
 pub fn count_tokens_by_len(string: &str) -> usize {
     string.len()
 }
@@ -146,7 +147,7 @@ pub fn get_placeholders(string: &str) -> HashSet<String> {
 #[cfg(test)]
 mod string_tests {
     use std::collections::{HashMap, HashSet};
-    use super::{get_placeholders, replace_all_placeholders};
+    use super::{get_placeholders, replace_all_placeholders, CountToken};
 
     #[test]
     fn test_get_keys() {
@@ -177,5 +178,12 @@ mod string_tests {
         ]);
 
         assert_eq!("alice and bob and alice", unsafe { replace_all_placeholders(string, &mapping).as_str() });
+    }
+
+    #[test]
+    fn test_str_len_impl() {
+        let counter = str::len;
+        let size = counter.count_token("");
+        assert_eq!(0, size);
     }
 }
