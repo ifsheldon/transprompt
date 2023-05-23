@@ -18,18 +18,18 @@ pub struct PartialPrompt {
 }
 
 impl PartialPrompt {
-    pub fn fill<S: Into<String>>(&mut self, placeholder: S, value: S) -> &mut Self {
+    pub fn fill(&mut self, placeholder: impl Into<String>, value: impl Into<String>) -> &mut Self {
         self.try_fill(placeholder, value).unwrap()
     }
 
-    pub fn try_fill<S: Into<String>>(&mut self, placeholder: S, value: S) -> Result<&mut Self, PlaceholderNotExist> {
+    pub fn try_fill(&mut self, placeholder: impl Into<String>, value: impl Into<String>) -> Result<&mut Self, PlaceholderNotExist> {
         let placeholder = placeholder.into();
         if self.placeholder_to_vals.contains_key(&placeholder) {
             self.unfilled_placeholders.remove(&placeholder);
             self.placeholder_to_vals.insert(placeholder, Some(value.into()));
             Ok(self)
         } else {
-            Err(PlaceholderNotExist::new(placeholder, value.into(), &self.template.placeholders))
+            Err(PlaceholderNotExist::new(placeholder, value, &self.template.placeholders))
         }
     }
 
@@ -63,11 +63,12 @@ pub struct PromptTemplate {
 }
 
 impl PromptTemplate {
-    pub fn new(template: String) -> Self {
+    pub fn new(template: impl Into<String>) -> Self {
         Self::with_metadata(template, JsonMap::new())
     }
 
-    pub fn with_metadata(template: String, metadata: JsonMap) -> Self {
+    pub fn with_metadata(template: impl Into<String>, metadata: JsonMap) -> Self {
+        let template = template.into();
         let placeholders = get_placeholders(&template);
         if placeholders.len() == 0 {
             warn!("Your prompt template does not have a placeholder. If this is intended, ignore this message. \
@@ -125,13 +126,13 @@ pub mod errors {
     }
 
     impl PlaceholderNotExist {
-        pub(crate) fn new(try_fill_placeholder: String,
-                          value: String,
+        pub(crate) fn new(try_fill_placeholder: impl Into<String>,
+                          value: impl Into<String>,
                           available_placeholders: &HashSet<String>) -> Self {
             let available_placeholders = available_placeholders.iter().map(|k| k.clone()).collect();
             PlaceholderNotExist {
-                try_fill_placeholder,
-                value,
+                try_fill_placeholder: try_fill_placeholder.into(),
+                value: value.into(),
                 available_placeholders,
             }
         }

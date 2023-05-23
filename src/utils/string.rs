@@ -59,16 +59,18 @@ impl<'a, C: CountToken> PromptTokenCountCache<'a, C> {
         }
     }
 
-    pub fn attempt_fill_and_count(&self, placeholder_name: &str, fill_value: &str) -> Result<usize, PlaceholderNotExist> {
-        if self.placeholder_occurrence.contains_key(placeholder_name) {
+    pub fn attempt_fill_and_count(&self, placeholder_name: impl Into<String>, fill_value: impl Into<String>) -> Result<usize, PlaceholderNotExist> {
+        let placeholder_name = placeholder_name.into();
+        let fill_value = fill_value.into();
+        if self.placeholder_occurrence.contains_key(placeholder_name.as_str()) {
             let old_count = self.template_token_count;
             let total_delta: usize = self.all_placeholders.iter()
                 .map(|placeholder| {
                     let placeholder = placeholder.as_str();
                     let fill_value = if placeholder == placeholder_name {
-                        Some(fill_value)
+                        Some(&fill_value)
                     } else {
-                        self.placeholder_to_val.get(placeholder).unwrap().as_deref()
+                        self.placeholder_to_val.get(placeholder).unwrap().as_ref()
                     };
                     let fill_value_token_count = fill_value.map_or(0, |s| self.counter.count_token(s));
                     let placeholder_token_count = *self.placeholder_token_count.get(placeholder).unwrap();
@@ -80,14 +82,14 @@ impl<'a, C: CountToken> PromptTokenCountCache<'a, C> {
 
             Ok(old_count + total_delta)
         } else {
-            Err(PlaceholderNotExist::new(placeholder_name.to_string(), fill_value.to_string(), self.all_placeholders))
+            Err(PlaceholderNotExist::new(placeholder_name, fill_value, self.all_placeholders))
         }
     }
 
     pub fn attempt_fill_multiple_and_count(&self, mappings: &HashMap<String, String>) -> Result<usize, PlaceholderNotExist> {
         for (placeholder_to_fill, value) in mappings {
             if !self.all_placeholders.contains(placeholder_to_fill.as_str()) {
-                return Err(PlaceholderNotExist::new(placeholder_to_fill.clone(), value.clone(), &self.all_placeholders));
+                return Err(PlaceholderNotExist::new(placeholder_to_fill, value, &self.all_placeholders));
             }
         }
         let old_count = self.template_token_count;
