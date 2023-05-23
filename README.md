@@ -2,6 +2,8 @@
 
 Prompt-centric framework for developing LLM applications in Rust
 
+**Note: `transprompt` is now a WIP, so the APIs are subject to change.**
+
 ## Why `transprompt`
 
 Because I'm done with layers of object-oriented abstraction that are mixed with inheritance hierarchies and methods that
@@ -11,7 +13,7 @@ LLM programming, a fancy alternative of prompt engineering, starts with prompts,
 data-driven if you come from software engineering).
 
 ## Concepts and Design
-The overall of `transprompt` follows data-driven design. The APIs are designed to be as explicit as possible, so users should easily track every step that composes a prompt. The API hierarchy also aims to be as flat as possible.
+The overall of `transprompt` follows data-driven design. The APIs are designed to be as explicit as possible, so users should easily track every step that composes a prompt. The API hierarchy also aims to be as flat as possible. Cycle speed is NOT a top priority since LLM can take trillions of cycles to respond to a request.
 
 ### Prompt Template and Placeholder
 
@@ -86,6 +88,7 @@ Sorted from top to down by importance:
 - [ ] Utilities including
     - [ ] Simple JSON postprocessing
     - [ ] Frequently used applications/agents
+    - [ ] Token counting utils
 - [ ] Examples
 - [ ] Future engineering improvements like advance compile time checking or type system dance
 - [ ] Python counterpart?
