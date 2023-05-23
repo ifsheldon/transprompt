@@ -18,3 +18,5 @@ readonly = "~0.2"
 chrono = "0.4.24"
 # Database related
 qdrant-client = "~1.1"
+# Token related
+tiktoken-rs = { version = "~0.4", features = ["async-openai"] }
