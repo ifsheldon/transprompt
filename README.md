@@ -83,7 +83,7 @@ A LLM application is just a ordered collection of:
 Sorted from top to down by importance:
 
 - [ ] Vector database connection
-- [ ] LLM integration
+- [x] LLM integration: basics for OpenAI ChatGPT
 - [ ] Documentation
 - [ ] Utilities including
     - [ ] Simple JSON postprocessing
