@@ -3,6 +3,7 @@ pub mod retrievers;
 pub mod string;
 pub mod token;
 pub mod llm;
+pub mod postprocess;
 
 use serde_json::{Map, Value};
 
