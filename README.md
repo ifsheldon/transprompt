@@ -86,13 +86,14 @@ Sorted from top to down by importance:
 - [x] LLM integration: basics for OpenAI ChatGPT
 - [ ] Documentation
 - [ ] Utilities including
-    - [ ] Simple JSON postprocessing
+    - [x] Simple JSON postprocessing: Only extracting out valid JSON content from a string for now
     - [ ] Frequently used applications/agents
     - [x] Token counting utils: Now only basic tiktoken support
 - [ ] Examples
 - [ ] Future engineering improvements like advance compile time checking or type system dance
 - [ ] Python counterpart?
   - I love Python's dynamism just like I like Rust's stasis, so I would love to see a prompt-centric counterpart in Python.
+  - It seems Semantic Kernel is similar?
 
 ## Contribution
 
