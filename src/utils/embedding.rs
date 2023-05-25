@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::Result;
 use async_openai::Client;
 use async_openai::types::{CreateEmbeddingRequest, EmbeddingUsage};
 use async_openai::types::EmbeddingInput;

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use async_openai::Client;
 use async_openai::error::OpenAIError;
-use async_openai::types::{ChatChoice, ChatCompletionRequestMessage, CreateChatCompletionRequest, CreateChatCompletionRequestArgs, CreateChatCompletionResponse, Role, Stop};
+use async_openai::types::{ChatChoice, ChatCompletionRequestMessage, CreateChatCompletionRequest, CreateChatCompletionResponse, Role, Stop};
 use crate::utils::JsonMap;
 
 #[derive(Debug, Clone)]
