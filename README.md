@@ -102,3 +102,7 @@ Contribution are always welcome. Please see TODOs.
 ## License
 
 `transprompt` will always remain free under Apache license.
+
+## Attribution
+* `async_openai`: The codebase of `transprompt` has copied content from this crate, which is `transprompt::utils::llm::openai::ConversationConfig`.
+* `tiktoken-rs`: In `transprompt::utils::token::tiktoken`, we re-export the `tiktoken` crate.
