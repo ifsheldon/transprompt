@@ -18,6 +18,10 @@ pub fn filter_to_json(string: impl Into<String>) -> Result<Value> {
     }
 }
 
+pub struct Jsonformer {
+    // TODO: add Jsonformer support
+}
+
 #[derive(Debug, Clone)]
 pub struct InvalidJSON {
     pub invalid_string: String,
