@@ -1,3 +1,5 @@
+//! Token counting traits and utilities
+
 pub mod tiktoken;
 
 use std::collections::{HashMap, HashSet};
@@ -5,24 +7,30 @@ use crate::prompt::errors::PlaceholderNotExist;
 use crate::prompt::PartialPrompt;
 use crate::utils::prompt_processing::{PLACEHOLDER_MATCH_RE, strip_format};
 
+/// Trait for counting tokens in a string.
 pub trait CountToken {
     fn count_token(&self, string: &str) -> usize;
 }
 
+/// Blanket impl of CountToken for Fn(&str) -> usize.
 impl<F> CountToken for F where F: Fn(&str) -> usize {
     fn count_token(&self, string: &str) -> usize {
         self(string)
     }
 }
 
+/// Count the number of tokens in a string by the length of the string.
 #[inline]
 pub fn count_tokens_by_len(string: &str) -> usize {
     string.len()
 }
 
+
+/// Cache for counting tokens in a [PartialPrompt](crate::prompt::PartialPrompt).
 #[derive(Debug, Clone)]
 #[readonly::make]
 pub struct PromptTokenCountCache<'a, C: CountToken> {
+    /// The token count of the template of the partial prompt. Note that placeholders are also counted with the placeholder names.
     #[readonly]
     pub template_token_count: usize,
     all_placeholders: &'a HashSet<String>,
@@ -45,6 +53,7 @@ impl<'a, C: CountToken> PromptTokenCountCache<'a, C> {
         count
     }
 
+    /// Create a new cache for counting tokens in a [PartialPrompt](crate::prompt::PartialPrompt).
     pub fn new(partial_prompt: &'a PartialPrompt, counter: &'a C) -> Self {
         let template_str = partial_prompt.template.str();
         let template_token_count = counter.count_token(template_str);
@@ -60,6 +69,9 @@ impl<'a, C: CountToken> PromptTokenCountCache<'a, C> {
         }
     }
 
+    /// Count the number of tokens in a [PartialPrompt](crate::prompt::PartialPrompt) with the placeholder filled with the given value.
+    /// Note that this does not change the partial prompt itself. Unfilled placeholders are also counted with the placeholder names.
+    /// Returns an error if the placeholder does not exist.
     pub fn attempt_fill_and_count(&self, placeholder_name: impl Into<String>, fill_value: impl Into<String>) -> Result<usize, PlaceholderNotExist> {
         let placeholder_name = placeholder_name.into();
         let fill_value = fill_value.into();
@@ -87,6 +99,9 @@ impl<'a, C: CountToken> PromptTokenCountCache<'a, C> {
         }
     }
 
+    /// Count the number of tokens in a [PartialPrompt](crate::prompt::PartialPrompt) with the placeholders filled with the given values.
+    /// Note that this does not change the partial prompt itself. Unfilled placeholders are also counted with the placeholder names.
+    /// Returns an error if any of the placeholders does not exist.
     pub fn attempt_fill_multiple_and_count(&self, mappings: &HashMap<String, String>) -> Result<usize, PlaceholderNotExist> {
         for (placeholder_to_fill, value) in mappings {
             if !self.all_placeholders.contains(placeholder_to_fill.as_str()) {

@@ -2,16 +2,21 @@ pub use tiktoken_rs::*;
 use anyhow::Result;
 use crate::utils::token::CountToken;
 
+
+/// Counter using the Tiktoken tokenizer.
 #[derive(Clone)]
 #[readonly::make]
 pub struct Tiktoken {
+    /// The model name of the tokenizer. read-only.
     #[readonly]
     pub model: String,
+    /// The tokenizer. read-only.
     #[readonly]
     pub bpe: CoreBPE,
 }
 
 impl Tiktoken {
+    /// Create a new Tiktoken counter.
     pub fn new(model: impl Into<String>) -> Result<Self> {
         let model = model.into();
         get_bpe_from_model(&model).and_then(|bpe| Ok(Tiktoken {

@@ -5,6 +5,7 @@ use async_openai::error::OpenAIError;
 use async_openai::types::{ChatChoice, ChatCompletionRequestMessage, CreateChatCompletionRequest, CreateChatCompletionResponse, Role, Stop};
 use crate::utils::JsonMap;
 
+/// Configuration for OpenAI LLM in a conversation setting. Partially copied from [async_openai::types::CreateChatCompletionRequest].
 #[derive(Debug, Clone)]
 pub struct ConversationConfig {
     /// ID of the model to use. Currently, only `gpt-3.5-turbo` and `gpt-3.5-turbo-0301` are supported.
@@ -75,12 +76,14 @@ impl Default for ConversationConfig {
     }
 }
 
+/// A message in a conversation with optional metadata.
 #[derive(Debug, Clone)]
 pub struct ChatMsg {
     pub content: ChatCompletionRequestMessage,
     pub metadata: Option<JsonMap>,
 }
 
+/// A conversation with OpenAI LLM.
 pub struct Conversation {
     pub client: Client,
     pub configs: ConversationConfig,
@@ -88,6 +91,7 @@ pub struct Conversation {
 }
 
 impl Conversation {
+    /// Create a new conversation with OpenAI LLM.
     pub fn new(client: Client, configs: ConversationConfig) -> Self {
         Self {
             client,
@@ -96,6 +100,7 @@ impl Conversation {
         }
     }
 
+    /// Insert a message into the conversation history.
     pub fn insert_history(&mut self, content: impl Into<String>, role: Role, metadata: Option<JsonMap>) {
         let chat_msg = ChatCompletionRequestMessage {
             role,
@@ -108,6 +113,7 @@ impl Conversation {
         });
     }
 
+    /// Commit a chat request to OpenAI LLM with the current conversation history.
     pub async fn commit_request(&self) -> Result<CreateChatCompletionResponse, OpenAIError> {
         let config = self.configs.clone();
         let request = CreateChatCompletionRequest {
@@ -127,15 +133,18 @@ impl Conversation {
         self.client.chat().create(request).await
     }
 
+    /// Insert a message into the conversation history and commit a chat request to OpenAI LLM.
     pub async fn query_raw(&mut self, content: impl Into<String>, role: Role, metadata: Option<JsonMap>) -> Result<CreateChatCompletionResponse, OpenAIError> {
         self.insert_history(content, role, metadata);
         self.commit_request().await
     }
 
+    /// Insert a message into the conversation history and commit a chat request to OpenAI LLM.
     pub async fn query(&mut self, content: impl Into<String>, role: Role, metadata: Option<JsonMap>) -> Result<Vec<ChatChoice>, OpenAIError> {
         self.query_raw(content, role, metadata).await.and_then(|response| Ok(response.choices))
     }
 
+    /// Insert a message into the conversation history and commit a chat request to OpenAI LLM.
     pub async fn chat(&mut self, content: impl Into<String>, role: Role, metadata: Option<JsonMap>) -> anyhow::Result<String> {
         let response = self.query(content, role, metadata).await?;
         Ok(response.first().unwrap().message.content.clone())

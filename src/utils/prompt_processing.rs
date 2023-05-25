@@ -3,6 +3,7 @@ use regex::{Captures, Regex};
 use lazy_static::lazy_static;
 
 lazy_static! {
+    /// Regex to match placeholders. The pattern matches antyhing between "{[" and "]}". No new line is allowed in the placeholder name.
     pub(crate) static ref PLACEHOLDER_MATCH_RE: Regex = Regex::new(r"\{\[.*?\]\}").unwrap();
 }
 
@@ -29,6 +30,7 @@ pub(crate) unsafe fn replace_all_placeholders(original: &str, mapping: &HashMap<
     new_string.to_string()
 }
 
+/// Get all placeholder names in a string.
 pub(crate) fn get_placeholders(string: &str) -> HashSet<String> {
     PLACEHOLDER_MATCH_RE.captures_iter(string)
         .map(|captures| strip_format(&captures[0]).to_string())
