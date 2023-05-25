@@ -29,7 +29,7 @@ pub(crate) unsafe fn replace_all_placeholders(original: &str, mapping: &HashMap<
     new_string.to_string()
 }
 
-pub fn get_placeholders(string: &str) -> HashSet<String> {
+pub(crate) fn get_placeholders(string: &str) -> HashSet<String> {
     PLACEHOLDER_MATCH_RE.captures_iter(string)
         .map(|captures| strip_format(&captures[0]).to_string())
         .collect()

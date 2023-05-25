@@ -3,7 +3,7 @@ pub mod tiktoken;
 use std::collections::{HashMap, HashSet};
 use crate::prompt::errors::PlaceholderNotExist;
 use crate::prompt::PartialPrompt;
-use crate::utils::string::{PLACEHOLDER_MATCH_RE, strip_format};
+use crate::utils::prompt_processing::{PLACEHOLDER_MATCH_RE, strip_format};
 
 pub trait CountToken {
     fn count_token(&self, string: &str) -> usize;
