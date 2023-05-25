@@ -1,5 +1,5 @@
 [package]
-name = "transpromt"
+name = "transprompt"
 version = "0.1.0"
 edition = "2021"
 authors = ["feng liang <feng.liang@kaust.edu.sa>"]
