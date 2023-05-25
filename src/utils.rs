@@ -3,6 +3,7 @@ pub mod retrievers;
 pub mod token;
 pub mod llm;
 pub mod postprocess;
+pub mod embedding;
 pub(crate) mod prompt_processing;
 
 use serde_json::{Map, Value};
