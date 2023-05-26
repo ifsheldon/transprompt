@@ -1,3 +1,12 @@
+//! # Utilities
+//!
+//! Including:
+//! * Vector storage
+//! * Token counters and tokenizers
+//! * LLM
+//! * Postprocess for strings
+//! * Timing utilities for virtual time
+
 pub mod vec_stores;
 pub mod token;
 pub mod llm;

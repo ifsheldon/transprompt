@@ -1,3 +1,8 @@
+//! # Application and Agent Samples
+//!
+//! WIP:
+//! * Generative Agents
+
 pub mod generative_agents {
     use crate::utils::vec_stores::QdrantCloudDB;
     use crate::filler::{FillPlaceholders, FillWithMut};
