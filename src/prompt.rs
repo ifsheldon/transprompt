@@ -23,12 +23,14 @@
 
 
 use std::collections::{HashMap, HashSet};
+use std::fmt::format;
 use std::sync::Arc;
-use crate::prompt::errors::{PlaceholderNotExist, UnfilledPlaceholders};
+use crate::prompt::errors::{DifferentTemplateOrigins, PlaceholderNotExist, UnfilledPlaceholders};
 use crate::utils::prompt_processing::{get_placeholders, replace_all_placeholders};
 use crate::utils::token::{CountToken, PromptTokenCountCache};
 use log::warn;
 use crate::utils::JsonMap;
+use anyhow::{Result, bail};
 
 
 /// A prompt template with some placeholders filled. A partial prompt can be only constructed from a prompt template via [PromptTemplate::construct_prompt].
@@ -47,6 +49,75 @@ pub struct PartialPrompt {
 }
 
 impl PartialPrompt {
+    #[inline]
+    fn is_from_same_template(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.template.template, &other.template.template) && Arc::ptr_eq(&self.template.meta_data, &self.template.meta_data)
+    }
+
+    /// Merges multiple partial prompts
+    ///
+    /// The placeholder-to-value mappings are merged. If in partial prompts, there are multiple different mappings of a same placeholder, for example "{\[a\]}" -> "alice" and "{\[a\]}" -> "alexa", then there are conflicts, which must be resolved by providing a closure/function.
+    ///
+    pub fn merge_partial_prompts<F>(mut partial_prompts: Vec<PartialPrompt>, resolve_conflict: Option<F>) -> Result<PartialPrompt>
+        where F: Fn(&String, (&String, &String)) -> String {
+        if partial_prompts.is_empty() {
+            bail!("You should provide a non-empty vec of partial prompts")
+        } else if partial_prompts.len() == 1 {
+            Ok(partial_prompts.pop().unwrap())
+        } else {
+            let some_partial_prompt = partial_prompts.first().unwrap();
+            let all_from_same_template = partial_prompts.iter().all(|p| p.is_from_same_template(some_partial_prompt));
+            if all_from_same_template {
+                let all_placeholders = &some_partial_prompt.template.placeholders;
+                let mut placeholders_to_val: HashMap<String, String> = HashMap::with_capacity(all_placeholders.len());
+                let all_mappings: Vec<(&String, &String)> = partial_prompts.iter()
+                    .flat_map(|pp| pp.placeholder_to_vals.iter())
+                    .filter_map(|(placeholder, value)| {
+                        value.as_ref().map(|v| (placeholder, v))
+                    })
+                    .collect();
+                for (placeholder, value) in all_mappings.into_iter() {
+                    let insert_value = if let Some(conflict_value) = placeholders_to_val.get(placeholder) {
+                        let resolved: Option<String> = if value == conflict_value {
+                            Some(value.clone())
+                        } else {
+                            resolve_conflict
+                                .as_ref()
+                                .and_then(|resolve| Some(resolve(placeholder, (value, conflict_value))))
+                        };
+                        if resolved.is_none() {
+                            bail!("Placeholder {} has two conflict values {} and {} and no conflict resolver is provided", placeholder, conflict_value, value)
+                        }
+                        resolved.unwrap()
+                    } else {
+                        value.clone()
+                    };
+                    placeholders_to_val.insert(placeholder.clone(), insert_value);
+                }
+                let placeholder_to_vals: HashMap<String, Option<String>> = all_placeholders.iter()
+                    .map(|p| { (p.clone(), placeholders_to_val.get(p).cloned()) })
+                    .collect();
+                let unfilled_placeholders = placeholder_to_vals.iter()
+                    .filter_map(|(p, v)| match v.as_ref() {
+                        Some(_) => Some(p.clone()),
+                        None => None
+                    })
+                    .collect();
+
+                Ok(PartialPrompt {
+                    template: some_partial_prompt.template.clone(),
+                    placeholder_to_vals,
+                    unfilled_placeholders,
+                })
+            } else {
+                Err(DifferentTemplateOrigins {
+                    partial_prompts
+                }.into())
+            }
+        }
+    }
+
+
     /// Fill the placeholders in the partial prompt with the given values.
     /// Panics if the placeholder does not exist.
     pub fn fill(&mut self, placeholder: impl Into<String>, value: impl Into<String>) -> &mut Self {
@@ -155,6 +226,22 @@ pub mod errors {
     use std::error::Error;
     use std::fmt;
     use std::fmt::Formatter;
+    use crate::prompt::PartialPrompt;
+
+    /// Error when partial prompts come from different templates
+    #[derive(Debug)]
+    pub struct DifferentTemplateOrigins {
+        pub partial_prompts: Vec<PartialPrompt>,
+    }
+
+    impl fmt::Display for DifferentTemplateOrigins {
+        fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+            write!(f, "Partial prompts come from different prompt templates")
+        }
+    }
+
+    impl Error for DifferentTemplateOrigins {}
+
 
     /// Error when trying to complete a partial prompt but there are still unfilled placeholders.
     #[derive(Debug)]
