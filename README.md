@@ -103,10 +103,13 @@ Sorted from top to down by importance:
 
 - [x] Vector database connection: simplest Qdrant DB for now
 - [x] LLM integration: basics for OpenAI ChatGPT
+  - [ ] Other LLM support
 - [x] Documentation: basic documentation for now
 - [ ] Utilities including
     - [x] Simple JSON postprocessing: Only extracting out valid JSON content from a string for now
+      - [ ] Add Support for Jsonformer
     - [ ] Frequently used applications/agents
+      - [ ] Generative Agents
     - [x] Token counting utils: Now only basic tiktoken support
 - [ ] Examples
 - [ ] Future engineering improvements like advance compile time checking or type system dance
