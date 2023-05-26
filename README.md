@@ -4,6 +4,12 @@ Prompt-centric framework for developing LLM applications in Rust
 
 **Note: `transprompt` is now a WIP, so the APIs are subject to change.**
 
+## Usage
+As for now, `transprompt` is alpha, so it's not released on crates.io. To use it, add a dependency in `Cargo.toml`
+```toml
+transprompt = { git = "https://github.com/ifsheldon/transprompt.git", branch = "main"}
+```
+
 ## Why `transprompt`
 
 Because I'm done with layers of object-oriented abstraction that are mixed with inheritance hierarchies and methods that
