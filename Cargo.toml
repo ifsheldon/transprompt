@@ -3,6 +3,10 @@ name = "transprompt"
 version = "0.1.0-alpha"
 edition = "2021"
 authors = ["feng liang <feng.liang@kaust.edu.sa>"]
+readme = "README.md"
+description = "Prompt-centric framework for developing LLM applications in Rust"
+repository = "https://github.com/ifsheldon/transprompt"
+license-file = "LICENSE"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
