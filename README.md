@@ -5,9 +5,19 @@ Prompt-centric framework for developing LLM applications in Rust
 **Note: `transprompt` is now a WIP, so the APIs are subject to change.**
 
 ## Usage
+
 As for now, `transprompt` is alpha, so it's not released on crates.io. To use it, add a dependency in `Cargo.toml`
+
 ```toml
-transprompt = { git = "https://github.com/ifsheldon/transprompt.git", branch = "main"}
+transprompt = { git = "https://github.com/ifsheldon/transprompt.git", branch = "main" }
+```
+
+## Documentation
+
+Run the below command to build the documentation and open it in the browser.
+
+```shell
+cargo doc --open
 ```
 
 ## Why `transprompt`
@@ -19,7 +29,10 @@ LLM programming, a fancy name of prompt engineering, starts with prompts, so it 
 data-driven if you come from software engineering).
 
 ## Concepts and Design
-The overall of `transprompt` follows data-driven design. The APIs are designed to be as explicit as possible, so users should easily track every step that composes a prompt. The API hierarchy also aims to be as flat as possible. Cycle speed is NOT a top priority since LLM can take trillions of cycles to respond to a request.
+
+The overall of `transprompt` follows data-driven design. The APIs are designed to be as explicit as possible, so users
+should easily track every step that composes a prompt. The API hierarchy also aims to be as flat as possible. Cycle
+speed is NOT a top priority since LLM can take trillions of cycles to respond to a request.
 
 ### Prompt Template and Placeholder
 
@@ -98,8 +111,9 @@ Sorted from top to down by importance:
 - [ ] Examples
 - [ ] Future engineering improvements like advance compile time checking or type system dance
 - [ ] Python counterpart?
-  - I love Python's dynamism just like I like Rust's stasis, so I would love to see a prompt-centric counterpart in Python.
-  - It seems Semantic Kernel is similar?
+    - I love Python's dynamism just like I like Rust's stasis, so I would love to see a prompt-centric counterpart in
+      Python.
+    - It seems Semantic Kernel is similar?
 
 ## Contribution
 
@@ -110,5 +124,7 @@ Contribution are always welcome. Please see TODOs.
 `transprompt` will always remain free under Apache license.
 
 ## Attribution
-* `async_openai`: The codebase of `transprompt` has copied content from this crate, which is `transprompt::utils::llm::openai::ConversationConfig`.
+
+* `async_openai`: The codebase of `transprompt` has copied content from this crate, which
+  is `transprompt::utils::llm::openai::ConversationConfig`.
 * `tiktoken-rs`: In `transprompt::utils::token::tiktoken`, we re-export the `tiktoken-rs` crate.
