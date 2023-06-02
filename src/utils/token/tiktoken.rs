@@ -1,7 +1,7 @@
-pub use tiktoken_rs::*;
 use anyhow::Result;
-use crate::utils::token::CountToken;
+pub use tiktoken_rs::*;
 
+use crate::utils::token::CountToken;
 
 /// Counter using the Tiktoken tokenizer.
 #[derive(Clone)]

@@ -1,11 +1,12 @@
 //! A module for vector stores. Vector stores are used to store vectors and metadata associated with them.
 
-use qdrant_client::prelude::{CreateCollection, Distance, QdrantClient, QdrantClientConfig, SearchPoints};
 use anyhow::Result;
+use qdrant_client::prelude::{CreateCollection, Distance, QdrantClient, QdrantClientConfig, SearchPoints};
 use qdrant_client::qdrant::{CollectionOperationResponse, PointStruct, ScoredPoint, VectorParams, VectorsConfig, WithPayloadSelector};
 use qdrant_client::qdrant::vectors_config::Config;
 use qdrant_client::qdrant::with_payload_selector::SelectorOptions::Enable;
 use url::Url;
+
 use crate::utils::embedding::EmbedVec;
 use crate::utils::JsonMap;
 

@@ -2,8 +2,9 @@
 //!
 //! Fillers are used to fill the placeholders in the prompt template.
 
-use crate::prompt::PartialPrompt;
 use anyhow::Result;
+
+use crate::prompt::PartialPrompt;
 
 /// Used to get the placeholders to fill.
 pub trait FillPlaceholders {

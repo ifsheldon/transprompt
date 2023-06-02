@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
-use regex::{Captures, Regex};
+
 use lazy_static::lazy_static;
+use regex::{Captures, Regex};
 
 lazy_static! {
     /// Regex to match placeholders. The pattern matches antyhing between "{{" and "}}". No new line is allowed in the placeholder name.
@@ -42,6 +43,7 @@ pub(crate) fn get_placeholders(string: &str) -> HashSet<String> {
 #[cfg(test)]
 mod string_tests {
     use std::collections::{HashMap, HashSet};
+
     use super::{get_placeholders, replace_all_placeholders};
 
     #[test]

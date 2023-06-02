@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
+
 use async_openai::Client;
 use async_openai::error::OpenAIError;
 use async_openai::types::{ChatChoice, ChatCompletionRequestMessage, CreateChatCompletionRequest, CreateChatCompletionResponse, Role, Stop};
+
 use crate::utils::JsonMap;
 
 /// Configuration for OpenAI LLM in a conversation setting. Partially copied from [async_openai::types::CreateChatCompletionRequest].
