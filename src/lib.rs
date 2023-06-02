@@ -28,12 +28,12 @@
 //! For example, a template looks like
 //!
 //! ```text
-//! You are a friendly and helpful assistant. Today is {[date]}.
+//! You are a friendly and helpful assistant. Today is {{date}}.
 //! ```
 //!
-//! Now, `{[date]}` is a placeholder, a slot to be filled, in this template, which has a name `"date"`.
+//! Now, `{{date}}` is a placeholder, a slot to be filled, in this template, which has a name `"date"`.
 //!
-//! The format of a named placeholder is simply `{[whatever name you like]}`. The name can have any strings except those
+//! The format of a named placeholder is simply `{{whatever name you like}}`. The name can have any strings except those
 //! containing line breaks `"\n"`and `"\r\n"`.
 //! > Why in this format?
 //! >
@@ -61,7 +61,7 @@
 //! Fillers fill placeholders. Placeholders get filled via [`PartialPrompt::fill`](crate::prompt::PartialPrompt::fill) or [`PartialPrompt::try_fill`](crate::prompt::PartialPrompt::try_fill).
 //!
 //! > A simple example is a date filler, which fills a placeholder name `date` that is represented in a template
-//! > as `{[date]}`.
+//! > as `{{date}}`.
 //!
 //! A filler can also be a composition of many fillers. Therefore, in a complex workflow, a [`PartialPrompt`](crate::prompt::PartialPrompt) can be filled by
 //! concurrent fillers in multiple stages.

@@ -4,7 +4,7 @@
 //! A prompt template is a string with placeholders. It can also have metadata in JSON format.
 //!
 //! ## Placeholder
-//! A placeholder is a string that is in the format of `{[name]}`. It can be filled with a value.
+//! A placeholder is a string that is in the format of `{{name}}`. It can be filled with a value.
 //! It has a name, which is the string inside the square brackets.
 //!
 //! ## PartialPrompt
@@ -56,7 +56,7 @@ impl PartialPrompt {
 
     /// Merges multiple partial prompts
     ///
-    /// The placeholder-to-value mappings are merged. If in partial prompts, there are multiple different mappings of a same placeholder, for example "{\[a\]}" -> "alice" and "{\[a\]}" -> "alexa", then there are conflicts, which must be resolved by providing a closure/function.
+    /// The placeholder-to-value mappings are merged. If in partial prompts, there are multiple different mappings of a same placeholder, for example "{{a}}" -> "alice" and "{{a}}" -> "alexa", then there are conflicts, which must be resolved by providing a closure/function.
     ///
     pub fn merge_partial_prompts<F>(mut partial_prompts: Vec<PartialPrompt>, resolve_conflict: Option<F>) -> Result<PartialPrompt>
         where F: Fn(&String, (&String, &String)) -> String {
