@@ -21,9 +21,9 @@ url = "~2.3"
 readonly = "~0.2"
 
 # Generative Agent - virtual time
-chrono = "0.4.24"
+chrono = "~0.4"
 # Database related
-qdrant-client = "~1.1"
+qdrant-client = "~1"
 # Token related
 tiktoken-rs = { version = "~0.5", features = ["async-openai"] }
 # LLM

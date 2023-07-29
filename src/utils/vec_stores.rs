@@ -33,10 +33,10 @@ impl QdrantCloudDB {
     }
 
     /// Create a new QdrantCloudDB instance that connects to a Qdrant cluster.
-    pub async fn new(collection: String, cluster_url: Url, api_key: String) -> Result<Self> {
+    pub fn new(collection: String, cluster_url: Url, api_key: String) -> Result<Self> {
         let mut config = QdrantClientConfig::from_url(cluster_url.as_str());
         config.set_api_key(&api_key);
-        let client = QdrantClient::new(Some(config)).await?;
+        let client = QdrantClient::new(Some(config))?;
         Ok(Self {
             client,
             collection,
@@ -56,6 +56,7 @@ impl QdrantCloudDB {
                     distance: distance.into(),
                     hnsw_config: None,
                     quantization_config: None,
+                    on_disk: None,
                 }))
             }),
             ..Default::default()
