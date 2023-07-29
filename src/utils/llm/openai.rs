@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
+use anyhow::anyhow;
 use async_openai::Client;
+use async_openai::config::Config;
 use async_openai::error::OpenAIError;
 use async_openai::types::{ChatChoice, ChatCompletionRequestMessage, CreateChatCompletionRequest, CreateChatCompletionResponse, Role, Stop};
 use crate::utils::JsonMap;
@@ -84,15 +86,16 @@ pub struct ChatMsg {
 }
 
 /// A conversation with OpenAI LLM.
-pub struct Conversation {
-    pub client: Client,
+/// FIXME: add function calling support.
+pub struct Conversation<ClientConfig: Config> {
+    pub client: Client<ClientConfig>,
     pub configs: ConversationConfig,
     pub history: Vec<ChatMsg>,
 }
 
-impl Conversation {
+impl<ClientConfig: Config> Conversation<ClientConfig> {
     /// Create a new conversation with OpenAI LLM.
-    pub fn new(client: Client, configs: ConversationConfig) -> Self {
+    pub fn new(client: Client<ClientConfig>, configs: ConversationConfig) -> Self {
         Self {
             client,
             configs,
@@ -104,8 +107,9 @@ impl Conversation {
     pub fn insert_history(&mut self, content: impl Into<String>, role: Role, metadata: Option<JsonMap>) {
         let chat_msg = ChatCompletionRequestMessage {
             role,
-            content: content.into(),
+            content: Some(content.into()),
             name: None,
+            function_call: None,
         };
         self.history.push(ChatMsg {
             content: chat_msg,
@@ -119,6 +123,8 @@ impl Conversation {
         let request = CreateChatCompletionRequest {
             model: config.model,
             messages: self.history.iter().map(|msg| msg.content.clone()).collect(),
+            functions: None,
+            function_call: None,
             temperature: config.temperature,
             top_p: config.top_p,
             n: config.n,
@@ -147,6 +153,6 @@ impl Conversation {
     /// Insert a message into the conversation history and commit a chat request to OpenAI LLM.
     pub async fn chat(&mut self, content: impl Into<String>, role: Role, metadata: Option<JsonMap>) -> anyhow::Result<String> {
         let response = self.query(content, role, metadata).await?;
-        Ok(response.first().unwrap().message.content.clone())
+        response.first().unwrap().message.content.clone().ok_or_else(|| anyhow!("No content in response"))
     }
 }
