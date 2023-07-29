@@ -23,7 +23,6 @@
 
 
 use std::collections::{HashMap, HashSet};
-use std::fmt::format;
 use std::sync::Arc;
 use crate::prompt::errors::{DifferentTemplateOrigins, PlaceholderNotExist, UnfilledPlaceholders};
 use crate::utils::prompt_processing::{get_placeholders, replace_all_placeholders};
