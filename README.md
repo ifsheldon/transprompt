@@ -41,12 +41,12 @@ As straightforward as its name, it's a template of prompts.
 For example, a template looks like
 
 ```text
-You are a friendly and helpful assistant. Today is {[date]}.
+You are a friendly and helpful assistant. Today is {{date}}.
 ```
 
-Now, `{[date]}` is a placeholder, a slot to be filled, in this template, which has a name `"date"`.
+Now, `{{date}}` is a placeholder, a slot to be filled, in this template, which has a name `"date"`.
 
-The format of a named placeholder is simply `{[whatever name you like]}`. The name can have any strings except those
+The format of a named placeholder is simply `{{whatever name you like}}`. The name can have any strings except those
 containing line breaks `"\n"`and `"\r\n"`.
 > Why in this format?
 >
@@ -74,7 +74,7 @@ and `FillWithMut<CTX>`.
 Fillers fill placeholders. Placeholders get filled via `PartialPrompt::fill` or `PartialPrompt::try_fill`.
 
 > A simple example is a date filler, which fills a placeholder name `date` that is represented in a template
-> as `{[date]}`.
+> as `{{date}}`.
 
 A filler can also be a composition of many fillers. Therefore, in a complex workflow, a `PartialPrompt` can be filled by
 concurrent fillers in multiple stages.
@@ -105,11 +105,12 @@ Sorted from top to down by importance:
 - [x] LLM integration: basics for OpenAI ChatGPT
   - [ ] Other LLM support
 - [x] Documentation: basic documentation for now
-- [ ] Integration of [guidance](https://github.com/microsoft/guidance)
+- [ ] ~~Integration of [guidance](https://github.com/microsoft/guidance)~~
     - I don't know how to do it yet, but the library is fxxking genius, despite its algorithmic simplicity.
+    - No emergent need because of OpenAI function calling
 - [ ] Utilities including
     - [x] Simple JSON postprocessing: Only extracting out valid JSON content from a string for now
-      - [ ] Add Support for Jsonformer
+      - [ ] ~~Add Support for Jsonformer~~ No emergent need because of OpenAI function calling
     - [ ] Frequently used applications/agents
       - [ ] Generative Agents
     - [x] Token counting utils: Now only basic tiktoken support
