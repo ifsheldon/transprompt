@@ -6,7 +6,7 @@ Prompt-centric framework for developing LLM applications in Rust
 
 ## Usage
 
-As for now, `transprompt` is alpha, so it's not released on crates.io. To use it, add a dependency in `Cargo.toml`
+As for now, `transprompt` is beta, so it's not released on crates.io. To use it, add a dependency in `Cargo.toml`
 
 ```toml
 transprompt = { git = "https://github.com/ifsheldon/transprompt.git", branch = "main" }
