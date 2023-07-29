@@ -101,6 +101,16 @@ impl<ClientConfig: Config> Conversation<ClientConfig> {
         }
     }
 
+    /// Count the number of tokens in a message.
+    pub fn count_tokens(message: &ChatCompletionRequestMessage) -> usize {
+        todo!("Implement token counting")
+    }
+
+    /// Count the number of tokens in the conversation history.
+    pub fn count_tokens_history(&self) -> usize {
+        self.history.iter().map(|msg| Self::count_tokens(&msg.content)).sum()
+    }
+
     /// Insert a message into the conversation history.
     pub fn insert_history(&mut self,
                           message: ChatCompletionRequestMessage,
