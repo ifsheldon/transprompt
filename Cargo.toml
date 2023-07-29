@@ -1,6 +1,6 @@
 [package]
 name = "transprompt"
-version = "0.1.0-alpha"
+version = "0.1.0-beta"
 edition = "2021"
 authors = ["feng liang <feng.liang@kaust.edu.sa>"]
 readme = "README.md"
