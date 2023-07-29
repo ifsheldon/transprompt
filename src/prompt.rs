@@ -19,7 +19,8 @@
 //! If you need to frequently try different filling values and re-count tokens, you can use [PartialPrompt::with_counter_cache] to get a [PromptTokenCountCache] that can be used to count the number of tokens in the prompt.
 //! It's very useful when the template is very long and thus takes a long time to count the number of tokens.
 //!
-//!
+//! ## TBD
+//! * Add function calling support in PartialPrompt and PromptTemplate?
 
 
 use std::collections::{HashMap, HashSet};
