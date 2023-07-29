@@ -105,6 +105,8 @@ Sorted from top to down by importance:
 - [x] LLM integration: basics for OpenAI ChatGPT
   - [ ] Other LLM support
 - [x] Documentation: basic documentation for now
+- [ ] Integration of [guidance](https://github.com/microsoft/guidance)
+    - I don't know how to do it yet, but the library is fxxking genius, despite its algorithmic simplicity.
 - [ ] Utilities including
     - [x] Simple JSON postprocessing: Only extracting out valid JSON content from a string for now
       - [ ] Add Support for Jsonformer

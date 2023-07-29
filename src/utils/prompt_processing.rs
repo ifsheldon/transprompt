@@ -1,16 +1,19 @@
 use std::collections::{HashMap, HashSet};
-use regex::{Captures, Regex};
+
 use lazy_static::lazy_static;
+use regex::{Captures, Regex};
 
 lazy_static! {
-    /// Regex to match placeholders. The pattern matches antyhing between "{[" and "]}". No new line is allowed in the placeholder name.
-    pub(crate) static ref PLACEHOLDER_MATCH_RE: Regex = Regex::new(r"\{\[.*?\]\}").unwrap();
+    /// Regex to match placeholders. The pattern matches antyhing between "{{" and "}}". No new line is allowed in the placeholder name.
+    ///
+    /// TODO: when `LazyCell` is stabilized, use that instead
+    pub(crate) static ref PLACEHOLDER_MATCH_RE: Regex = Regex::new(r"\{\{.*?\}\}").unwrap();
 }
 
 #[inline]
 pub(crate) fn strip_format(key: &str) -> &str {
-    //! Strips "{\[" and "\]}" for a string, which is algorithmically unsafe.
-    //! Ensure the string is properly formatted like "{\[a\]}".
+    //! Strips "{{" and "}}" for a string, which is algorithmically unsafe.
+    //! Ensure the string is properly formatted like "{{a}}".
     &key[2..key.len() - 2]
 }
 
@@ -40,20 +43,21 @@ pub(crate) fn get_placeholders(string: &str) -> HashSet<String> {
 #[cfg(test)]
 mod string_tests {
     use std::collections::{HashMap, HashSet};
+
     use super::{get_placeholders, replace_all_placeholders};
 
     #[test]
     fn test_get_keys() {
-        let string = "{[a]}";
+        let string = "{{a}}";
         let keys = get_placeholders(string);
         let expect_keys = HashSet::from(["a".to_string()]);
         assert_eq!(expect_keys, keys);
 
-        let string = "{[a\n]}";
+        let string = "{{a\n}}";
         let keys = get_placeholders(string);
         assert_eq!(0, keys.len());
 
-        let string = "{[a]}    {[b]}";
+        let string = "{{a}}    {{b}}";
         let keys = get_placeholders(string);
         let expect_keys = HashSet::from(["a".to_string(), "b".to_string()]);
         assert_eq!(expect_keys, keys);
@@ -61,7 +65,7 @@ mod string_tests {
 
     #[test]
     fn test_replace() {
-        let string = "{[a]} and {[b]} and {[a]}";
+        let string = "{{a}} and {{b}} and {{a}}";
         let keys = get_placeholders(string);
         let expect_keys = HashSet::from(["a".to_string(), "b".to_string()]);
         assert_eq!(expect_keys, keys);

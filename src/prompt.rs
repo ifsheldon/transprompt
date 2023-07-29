@@ -4,7 +4,7 @@
 //! A prompt template is a string with placeholders. It can also have metadata in JSON format.
 //!
 //! ## Placeholder
-//! A placeholder is a string that is in the format of `{[name]}`. It can be filled with a value.
+//! A placeholder is a string that is in the format of `{{name}}`. It can be filled with a value.
 //! It has a name, which is the string inside the square brackets.
 //!
 //! ## PartialPrompt
@@ -25,13 +25,14 @@
 
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+
+use anyhow::{bail, Result};
+use log::warn;
+
 use crate::prompt::errors::{DifferentTemplateOrigins, PlaceholderNotExist, UnfilledPlaceholders};
+use crate::utils::JsonMap;
 use crate::utils::prompt_processing::{get_placeholders, replace_all_placeholders};
 use crate::utils::token::{CountToken, PromptTokenCountCache};
-use log::warn;
-use crate::utils::JsonMap;
-use anyhow::{Result, bail};
-
 
 /// A prompt template with some placeholders filled. A partial prompt can be only constructed from a prompt template via [PromptTemplate::construct_prompt].
 #[derive(Debug, Clone)]
@@ -56,7 +57,7 @@ impl PartialPrompt {
 
     /// Merges multiple partial prompts
     ///
-    /// The placeholder-to-value mappings are merged. If in partial prompts, there are multiple different mappings of a same placeholder, for example "{\[a\]}" -> "alice" and "{\[a\]}" -> "alexa", then there are conflicts, which must be resolved by providing a closure/function.
+    /// The placeholder-to-value mappings are merged. If in partial prompts, there are multiple different mappings of a same placeholder, for example "{{a}}" -> "alice" and "{{a}}" -> "alexa", then there are conflicts, which must be resolved by providing a closure/function.
     ///
     pub fn merge_partial_prompts<F>(mut partial_prompts: Vec<PartialPrompt>, resolve_conflict: Option<F>) -> Result<PartialPrompt>
         where F: Fn(&String, (&String, &String)) -> String {
@@ -226,6 +227,7 @@ pub mod errors {
     use std::error::Error;
     use std::fmt;
     use std::fmt::Formatter;
+
     use crate::prompt::PartialPrompt;
 
     /// Error when partial prompts come from different templates
