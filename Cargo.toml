@@ -24,7 +24,7 @@ lazy_static = "1.4.0"
 async-trait = "0.1.68"
 log = "0.4"
 anyhow = "~1.0"
-url = "~2.3"
+url = "~2.4"
 readonly = "~0.2"
 
 # Database related
