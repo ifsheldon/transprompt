@@ -1,7 +1,7 @@
-use crate::filler::{FillPlaceholders, FillWithMut};
-use crate::prompt::{PartialPrompt, PromptTemplate};
-use crate::utils::timing::VirtualTime;
-use crate::utils::vec_stores::QdrantCloudDB;
+use transprompt::filler::{FillPlaceholders, FillWithMut};
+use transprompt::prompt::{PartialPrompt, PromptTemplate};
+use crate::timing::VirtualTime;
+use transprompt::utils::vec_stores::QdrantCloudDB;
 
 pub struct GAConfig {
     recency_decay_factor: f32,
@@ -131,15 +131,5 @@ impl FillWithMut<GAContext> for GAMemory {
             .try_fill(Self::RELEVANT_MEMORY_PLACEHOLDER, relevant_memories.join("\n"))?
             .try_fill(Self::MOST_RECENT_MEMORIES_PLACEHOLDER, "")?;
         Ok(context)
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use crate::exemplars::generative_agents::GenerativeAgent;
-
-    #[test]
-    fn test_print() {
-        println!("{}", GenerativeAgent::GENERAL_RESPONSE_TEMPLATE_STR)
     }
 }

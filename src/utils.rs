@@ -14,7 +14,6 @@ pub mod token;
 pub mod llm;
 pub mod postprocess;
 pub mod embedding;
-pub mod timing;
 pub(crate) mod prompt_processing;
 
 pub type JsonMap = Map<String, Value>;

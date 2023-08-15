@@ -20,7 +20,6 @@ pub struct QdrantCloudDB {
 }
 
 impl QdrantCloudDB {
-
     /// Helper function to create a point that can be upserted.
     pub fn create_point(vec: Vector, metadata: JsonMap) -> PointStruct {
         let metadata = metadata.into_iter()

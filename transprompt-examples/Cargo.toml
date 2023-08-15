@@ -1,0 +1,15 @@
+[package]
+name = "transprompt-examples"
+version = "0.1.0"
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# Generative Agent - virtual time
+chrono = "~0.4"
+transprompt = { path = ".." }
+anyhow = "~1.0"
+
+[[example]]
+name = "generative_agents"
