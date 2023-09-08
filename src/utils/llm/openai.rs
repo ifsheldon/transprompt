@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
+use serde::{Deserialize, Serialize};
 use async_openai::Client;
 use async_openai::config::Config;
 use async_openai::error::OpenAIError;
@@ -7,7 +8,7 @@ use async_openai::types::{ChatCompletionFunctionCall, ChatCompletionFunctions, C
 use crate::utils::JsonMap;
 
 /// Configuration for OpenAI LLM in a conversation setting. Partially copied from [async_openai::types::CreateChatCompletionRequest].
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConversationConfig {
     /// ID of the model to use.
     /// See the [model endpoint compatibility](https://platform.openai.com/docs/models/model-endpoint-compatibility) table for details on which models work with the Chat API.
