@@ -6,6 +6,7 @@ use async_openai::config::Config;
 use async_openai::error::OpenAIError;
 use async_openai::types::{ChatCompletionFunctionCall, ChatCompletionFunctions, ChatCompletionRequestMessage, CreateChatCompletionRequest, CreateChatCompletionResponse, Stop};
 use crate::utils::JsonMap;
+use crate::utils::token::tiktoken::Tiktoken;
 
 /// Configuration for OpenAI LLM in a conversation setting. Partially copied from [async_openai::types::CreateChatCompletionRequest].
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -90,26 +91,24 @@ pub struct Conversation<ClientConfig: Config> {
     pub client: Client<ClientConfig>,
     pub configs: ConversationConfig,
     pub history: Vec<ChatMsg>,
+    pub tiktoken: Tiktoken,
 }
 
 impl<ClientConfig: Config> Conversation<ClientConfig> {
     /// Create a new conversation with OpenAI LLM.
     pub fn new(client: Client<ClientConfig>, configs: ConversationConfig) -> Self {
+        let tiktoken = Tiktoken::new(configs.model.clone()).unwrap();
         Self {
             client,
             configs,
             history: Vec::new(),
+            tiktoken,
         }
-    }
-
-    /// Count the number of tokens in a message.
-    pub fn count_tokens(message: &ChatCompletionRequestMessage) -> usize {
-        todo!("Implement token counting")
     }
 
     /// Count the number of tokens in the conversation history.
     pub fn count_tokens_history(&self) -> usize {
-        self.history.iter().map(|msg| Self::count_tokens(&msg.content)).sum()
+        self.history.iter().map(|msg| self.tiktoken.count_msg_token(&msg.content)).sum()
     }
 
     /// Insert a message into the conversation history.
