@@ -9,7 +9,7 @@ repository = "https://github.com/ifsheldon/transprompt"
 
 [package]
 name = "transprompt"
-version = "0.3-beta"
+version = "0.3.0-beta"
 edition.workspace = true
 authors.workspace = true
 license-file.workspace = true
