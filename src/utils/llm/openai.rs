@@ -91,17 +91,21 @@ pub struct Conversation<ClientConfig: Config> {
     pub client: Client<ClientConfig>,
     pub configs: ConversationConfig,
     pub history: Vec<ChatMsg>,
+    pub auto_truncate_history: bool,
     pub tiktoken: Tiktoken,
 }
 
 impl<ClientConfig: Config> Conversation<ClientConfig> {
     /// Create a new conversation with OpenAI LLM.
-    pub fn new(client: Client<ClientConfig>, configs: ConversationConfig) -> Self {
+    pub fn new(client: Client<ClientConfig>,
+               configs: ConversationConfig,
+               auto_truncate_history: bool) -> Self {
         let tiktoken = Tiktoken::new(configs.model.clone()).unwrap();
         Self {
             client,
             configs,
             history: Vec::new(),
+            auto_truncate_history,
             tiktoken,
         }
     }
@@ -119,6 +123,9 @@ impl<ClientConfig: Config> Conversation<ClientConfig> {
             content: message,
             metadata,
         });
+        if self.auto_truncate_history {
+            self.truncate_history();
+        }
     }
 
     /// Commit a chat request to OpenAI LLM with the current conversation history.
