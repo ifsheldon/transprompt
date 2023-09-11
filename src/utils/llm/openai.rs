@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 use async_openai::Client;
 use async_openai::config::Config;
 use async_openai::error::OpenAIError;
-use async_openai::types::{ChatCompletionFunctionCall, ChatCompletionFunctions, ChatCompletionRequestMessage, CreateChatCompletionRequest, CreateChatCompletionResponse, Stop};
+use async_openai::types::{ChatCompletionFunctionCall, ChatCompletionFunctions, ChatCompletionRequestMessage, CreateChatCompletionRequest, CreateChatCompletionResponse, Role, Stop};
 use crate::utils::JsonMap;
-use crate::utils::token::tiktoken::Tiktoken;
+use crate::utils::token::tiktoken::{MODEL_TO_MAX_TOKENS, Tiktoken};
 
 /// Configuration for OpenAI LLM in a conversation setting. Partially copied from [async_openai::types::CreateChatCompletionRequest].
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -143,5 +143,28 @@ impl<ClientConfig: Config> Conversation<ClientConfig> {
             user: config.user,
         };
         self.client.chat().create(request).await
+    }
+
+    pub fn truncate_history(&mut self) {
+        let mut max_tokens = *MODEL_TO_MAX_TOKENS.get(self.configs.model.as_str()).unwrap();
+        let sys_prompt = self.history.first().and_then(|chat_msg| {
+            if chat_msg.content.role == Role::System {
+                max_tokens -= self.tiktoken.count_msg_token(&chat_msg.content);
+                Some(chat_msg)
+            } else {
+                None
+            }
+        });
+        let truncate_start_idx = self.tiktoken.get_truncate_start_idx(&self.history.iter().map(|chat_msg| chat_msg.content.clone()).collect(), max_tokens);
+        if truncate_start_idx > 0 {
+            if let Some(sys_prompt) = sys_prompt {
+                let mut new_history = Vec::with_capacity(self.history.len() - truncate_start_idx + 1);
+                new_history.push(sys_prompt.clone());
+                new_history.extend_from_slice(&self.history[truncate_start_idx..]);
+                self.history = new_history;
+            } else {
+                self.history = self.history[truncate_start_idx..].to_vec();
+            }
+        }
     }
 }
