@@ -12,7 +12,7 @@ const TOKENS_PER_NAME: usize = 1;
 lazy_static! {
     /// const map from model name to max tokens.
     /// TODO: when `LazyCell` is stabilized, use that instead
-    pub(crate) static ref MODEL_TO_MAX_TOKENS: HashMap<&'static str, usize> = HashMap::from([
+    pub static ref MODEL_TO_MAX_TOKENS: HashMap<&'static str, usize> = HashMap::from([
         ("gpt-4", 8192),
         ("gpt-4-0613", 8192),
         ("gpt-4-32k", 32768),
