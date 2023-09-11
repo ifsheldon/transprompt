@@ -102,7 +102,6 @@ impl Tiktoken {
                 break;
             }
             token_count += message_token_count;
-            trimmed_messages.push(message.clone());
         }
         trimmed_messages.extend_from_slice(&messages[start_i..]);
         return trimmed_messages;
