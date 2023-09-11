@@ -76,35 +76,58 @@ impl Tiktoken {
     pub fn truncate_messages(&self,
                              messages: &Vec<ChatCompletionRequestMessage>,
                              system_message: Option<ChatCompletionRequestMessage>) -> Vec<ChatCompletionRequestMessage> {
-        self.truncate_messages_with_max_tokens(messages, system_message, *MODEL_TO_MAX_TOKENS.get(self.model.as_str()).unwrap())
+        if messages.is_empty() {
+            return messages.clone();
+        }
+        let max_tokens = *MODEL_TO_MAX_TOKENS.get(self.model.as_str()).unwrap();
+        return if let Some(sys_prompt) = system_message {
+            let sys_prompt_token_count = self.count_msg_token(&sys_prompt);
+            assert!(sys_prompt_token_count <= max_tokens, "system message token count {} is greater than max tokens {}", sys_prompt_token_count, max_tokens);
+            let truncate_start_idx = self.get_truncate_start_idx(messages, max_tokens - sys_prompt_token_count);
+            if truncate_start_idx == 0 {
+                let mut new_messages = messages.clone();
+                if !messages.first().unwrap().eq(&sys_prompt) {
+                    new_messages[0] = sys_prompt;
+                }
+                new_messages
+            } else {
+                let mut new_messages = Vec::with_capacity(messages.len() - truncate_start_idx + 1);
+                new_messages.push(sys_prompt);
+                new_messages.extend_from_slice(&messages[truncate_start_idx..]);
+                new_messages
+            }
+        } else {
+            let truncate_start_idx = self.get_truncate_start_idx(messages, max_tokens);
+            if truncate_start_idx == 0 {
+                messages.clone()
+            } else {
+                messages[truncate_start_idx..].to_vec()
+            }
+        };
     }
 
-    pub fn truncate_messages_with_max_tokens(&self,
-                                             messages: &Vec<ChatCompletionRequestMessage>,
-                                             system_message: Option<ChatCompletionRequestMessage>,
-                                             max_tokens: usize) -> Vec<ChatCompletionRequestMessage> {
-        assert_ne!(max_tokens, 0, "max_tokens cannot be 0");
-        let mut trimmed_messages = Vec::with_capacity(messages.len());
-        let mut token_count = 0;
-        if let Some(system_message) = system_message {
-            let system_message_token_count = self.count_msg_token(&system_message);
-            assert!(system_message_token_count <= max_tokens, "system message token count {} is greater than max tokens {} of model {}", system_message_token_count, max_tokens, self.model);
-            trimmed_messages.push(system_message);
-            token_count += system_message_token_count;
+    pub(crate) fn get_truncate_start_idx(&self,
+                                         messages: &Vec<ChatCompletionRequestMessage>,
+                                         max_tokens: usize) -> usize {
+        if messages.is_empty() {
+            return 0;
         }
+        let num_messages = messages.len();
+        if max_tokens == 0 {
+            return num_messages;
+        }
+        let mut token_count = 0;
         // TODO: make this algorithm more smart as in Python `tokentrim`
-        let mut start_i = messages.len();
-        for i in (0..messages.len()).rev() {
-            let message = &messages[i];
-            let message_token_count = self.count_msg_token(message);
+        let mut truncate_start_idx = 0;
+        for (idx, msg) in messages.iter().enumerate().rev() {
+            let message_token_count = self.count_msg_token(msg);
             if token_count + message_token_count > max_tokens {
-                start_i = i + 1;
+                truncate_start_idx = idx + 1;
                 break;
             }
             token_count += message_token_count;
         }
-        trimmed_messages.extend_from_slice(&messages[start_i..]);
-        return trimmed_messages;
+        return truncate_start_idx;
     }
 }
 
