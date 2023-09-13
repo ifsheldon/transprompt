@@ -82,13 +82,13 @@ impl Default for ConversationConfig {
 /// A message in a conversation with optional metadata.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChatMsg {
-    pub content: ChatCompletionRequestMessage,
+    pub msg: ChatCompletionRequestMessage,
     pub metadata: Option<JsonMap>,
 }
 
 impl Display for ChatMsg {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", serde_json::to_string_pretty(&self.content).unwrap())
+        write!(f, "{}", serde_json::to_string_pretty(&self.msg).unwrap())
     }
 }
 
@@ -100,7 +100,7 @@ impl ChatMsg {
             .as_ref()
             .and_then(|fn_call_delta| {
                 // if the container message already has a function call, we need to update the function call
-                if let Some(fn_call) = self.content.function_call.as_mut() {
+                if let Some(fn_call) = self.msg.function_call.as_mut() {
                     fn_call_delta.name
                         .as_ref()
                         .and_then(|fn_name| {
@@ -115,7 +115,7 @@ impl ChatMsg {
                         });
                 } else {
                     // if the container message does not have a function call, we need to create one
-                    self.content.function_call = Some(FunctionCall {
+                    self.msg.function_call = Some(FunctionCall {
                         name: fn_call_delta.name.as_ref().map_or_else(String::new, Clone::clone),
                         arguments: fn_call_delta.arguments.as_ref().map_or_else(String::new, Clone::clone),
                     });
@@ -127,11 +127,11 @@ impl ChatMsg {
             .as_ref()
             .and_then(|content_delta| {
                 // if the container message already has a content, we need to update the content
-                if let Some(content) = self.content.content.as_mut() {
+                if let Some(content) = self.msg.content.as_mut() {
                     content.push_str(content_delta.as_str());
                 } else {
                     // if the container message does not have a content, we need to create one
-                    self.content.content = Some(content_delta.clone());
+                    self.msg.content = Some(content_delta.clone());
                 }
                 END_OP
             });
@@ -182,7 +182,7 @@ impl<ClientConfig: Config + Debug> Conversation<ClientConfig> {
 
     /// Count the number of tokens in the conversation history.
     pub fn count_tokens_history(&self) -> usize {
-        self.history.iter().map(|msg| self.tiktoken.count_msg_token(&msg.content)).sum()
+        self.history.iter().map(|msg| self.tiktoken.count_msg_token(&msg.msg)).sum()
     }
 
     /// Insert a message into the conversation history.
@@ -190,7 +190,7 @@ impl<ClientConfig: Config + Debug> Conversation<ClientConfig> {
                           message: ChatCompletionRequestMessage,
                           metadata: Option<JsonMap>) {
         self.history.push(ChatMsg {
-            content: message,
+            msg: message,
             metadata,
         });
         if self.auto_truncate_history {
@@ -206,7 +206,7 @@ impl<ClientConfig: Config + Debug> Conversation<ClientConfig> {
         let config = self.configs.clone();
         CreateChatCompletionRequest {
             model: config.model,
-            messages: self.history.iter().map(|msg| msg.content.clone()).collect(),
+            messages: self.history.iter().map(|msg| msg.msg.clone()).collect(),
             functions,
             function_call,
             temperature: config.temperature,
@@ -243,14 +243,14 @@ impl<ClientConfig: Config + Debug> Conversation<ClientConfig> {
     pub fn truncate_history(&mut self) {
         let mut max_tokens = *MODEL_TO_MAX_TOKENS.get(self.configs.model.as_str()).unwrap();
         let sys_prompt = self.history.first().and_then(|chat_msg| {
-            if chat_msg.content.role == Role::System {
-                max_tokens -= self.tiktoken.count_msg_token(&chat_msg.content);
+            if chat_msg.msg.role == Role::System {
+                max_tokens -= self.tiktoken.count_msg_token(&chat_msg.msg);
                 Some(chat_msg)
             } else {
                 None
             }
         });
-        let truncate_start_idx = self.tiktoken.get_truncate_start_idx(&self.history.iter().map(|chat_msg| chat_msg.content.clone()).collect(), max_tokens);
+        let truncate_start_idx = self.tiktoken.get_truncate_start_idx(&self.history.iter().map(|chat_msg| chat_msg.msg.clone()).collect(), max_tokens);
         if truncate_start_idx > 0 {
             if let Some(sys_prompt) = sys_prompt {
                 let mut new_history = Vec::with_capacity(self.history.len() - truncate_start_idx + 1);
