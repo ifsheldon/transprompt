@@ -86,6 +86,12 @@ pub struct ChatMsg {
     pub metadata: Option<JsonMap>,
 }
 
+impl std::fmt::Display for ChatMsg {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", serde_json::to_string_pretty(&self.content).unwrap())
+    }
+}
+
 /// A conversation with OpenAI LLM.
 pub struct Conversation<ClientConfig: Config> {
     pub client: Client<ClientConfig>,
