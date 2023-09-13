@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::fmt::Debug;
+use std::fmt::{Debug, Formatter, Display};
 use serde::{Deserialize, Serialize};
 use async_openai::Client;
 use async_openai::config::Config;
@@ -80,14 +80,14 @@ impl Default for ConversationConfig {
 }
 
 /// A message in a conversation with optional metadata.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChatMsg {
     pub content: ChatCompletionRequestMessage,
     pub metadata: Option<JsonMap>,
 }
 
-impl std::fmt::Display for ChatMsg {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for ChatMsg {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", serde_json::to_string_pretty(&self.content).unwrap())
     }
 }
@@ -99,6 +99,12 @@ pub struct Conversation<ClientConfig: Config> {
     pub history: Vec<ChatMsg>,
     pub auto_truncate_history: bool,
     pub tiktoken: Tiktoken,
+}
+
+impl<ClientConfig: Config> Display for Conversation<ClientConfig> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", serde_json::to_string_pretty(&self.history).unwrap())
+    }
 }
 
 impl<ClientConfig: Config> Conversation<ClientConfig> {
