@@ -5,6 +5,7 @@ use async_openai::Client;
 use async_openai::config::Config;
 use async_openai::error::OpenAIError;
 use async_openai::types::{ChatCompletionFunctionCall, ChatCompletionFunctions, ChatCompletionRequestMessage, ChatCompletionResponseStream, ChatCompletionStreamResponseDelta, CreateChatCompletionRequest, CreateChatCompletionResponse, FunctionCall, Role, Stop};
+use crate::utils::helper_traits::{ThenDo, ThenDoMut};
 use crate::utils::JsonMap;
 use crate::utils::token::tiktoken::{MODEL_TO_MAX_TOKENS, Tiktoken};
 
@@ -94,47 +95,39 @@ impl Display for ChatMsg {
 
 impl ChatMsg {
     pub fn merge_delta(&mut self, delta: &ChatCompletionStreamResponseDelta) {
-        const END_OP: Option<()> = Some(()); // To stop compiler complaining type error
         // if we have a function call delta, we need to update the function call
         delta.function_call
-            .as_ref()
-            .and_then(|fn_call_delta| {
-                // if the container message already has a function call, we need to update the function call
-                if let Some(fn_call) = self.msg.function_call.as_mut() {
-                    fn_call_delta.name
-                        .as_ref()
-                        .and_then(|fn_name| {
-                            fn_call.name = fn_name.clone();
-                            END_OP
-                        });
-                    fn_call_delta.arguments
-                        .as_ref()
-                        .and_then(|fn_args| {
-                            fn_call.arguments.push_str(fn_args);
-                            END_OP
-                        });
-                } else {
-                    // if the container message does not have a function call, we need to create one
-                    self.msg.function_call = Some(FunctionCall {
-                        name: fn_call_delta.name.as_ref().map_or_else(String::new, Clone::clone),
-                        arguments: fn_call_delta.arguments.as_ref().map_or_else(String::new, Clone::clone),
-                    });
-                }
-                END_OP
-            });
+            .ok_then_do(|fn_call_delta|
+                self.msg.function_call
+                    .ok_then_do_otherwise_mut(
+                        |func_call| {
+                            // if the container message already has a function call, we need to update the function call
+                            fn_call_delta.name
+                                .ok_then_do(|fn_name| func_call.name = fn_name.clone());
+                            fn_call_delta.arguments
+                                .ok_then_do(|fn_args| func_call.arguments.push_str(fn_args));
+                        },
+                        |func_call_option| {
+                            // if the container message does not have a function call, we need to create one
+                            *func_call_option = Some(FunctionCall {
+                                name: fn_call_delta.name.as_ref().map_or_else(String::new, Clone::clone),
+                                arguments: fn_call_delta.arguments.as_ref().map_or_else(String::new, Clone::clone),
+                            });
+                        })
+            );
+
         // if we have a content delta, we need to update the content
         delta.content
-            .as_ref()
-            .and_then(|content_delta| {
-                // if the container message already has a content, we need to update the content
-                if let Some(content) = self.msg.content.as_mut() {
-                    content.push_str(content_delta.as_str());
-                } else {
-                    // if the container message does not have a content, we need to create one
-                    self.msg.content = Some(content_delta.clone());
-                }
-                END_OP
-            });
+            .ok_then_do(
+                |content_delta|
+                    self.msg.content.ok_then_do_otherwise_mut(|content| {
+                        // if the container message already has a content, we need to update the content
+                        content.push_str(content_delta.as_str());
+                    }, |content_option| {
+                        // if the container message does not have a content, we need to create one
+                        *content_option = Some(content_delta.clone());
+                    })
+            );
     }
 }
 
@@ -273,6 +266,7 @@ mod test {
     use async_openai::types::{ChatCompletionFunctionsArgs, ChatCompletionRequestMessageArgs, CreateChatCompletionRequestArgs, Role};
     use serde_json::json;
     use futures::StreamExt;
+    use crate::utils::helper_traits::ThenDo;
     use crate::utils::llm::openai::ChatMsg;
 
     #[derive(Debug, Clone, serde::Deserialize)]
@@ -347,15 +341,14 @@ mod test {
                 Ok(response) => {
                     for chat_choice in response.choices {
                         assistant_message.merge_delta(&chat_choice.delta);
-                        if let Some(fn_call) = &chat_choice.delta.function_call {
-                            print_immediately(format!("function_call: {:?}\n", fn_call));
-                            if let Some(name) = &fn_call.name {
-                                fn_name = name.clone();
-                            }
-                            if let Some(args) = &fn_call.arguments {
-                                fn_args.push_str(args);
-                            }
-                        }
+                        chat_choice.delta.function_call
+                            .ok_then_do(|fn_call| {
+                                print_immediately(format!("function_call: {:?}\n", fn_call));
+                                fn_call.name
+                                    .ok_then_do(|name| fn_name = name.clone());
+                                fn_call.arguments
+                                    .ok_then_do(|args| fn_args.push_str(args));
+                            });
                         if let Some(finish_reason) = &chat_choice.finish_reason {
                             if finish_reason == "function_call" {
                                 print_immediately("\nfunction called\n");
@@ -380,6 +373,7 @@ mod test {
         let fn_args: WeatherFunctionArguments = serde_json::from_str(fn_args.as_str())?;
         assert_eq!(fn_name, "get_current_weather");
         assert!(function_called);
+        assert!(fn_args.location.to_lowercase().contains("boston"));
 
         Ok(())
     }
