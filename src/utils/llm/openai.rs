@@ -93,6 +93,7 @@ impl Display for ChatMsg {
 }
 
 /// A conversation with OpenAI LLM.
+#[derive(Clone)]
 pub struct Conversation<ClientConfig: Config> {
     pub client: Client<ClientConfig>,
     pub configs: ConversationConfig,
