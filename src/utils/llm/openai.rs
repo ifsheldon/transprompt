@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use async_openai::Client;
 use async_openai::config::Config;
 use async_openai::error::OpenAIError;
-use async_openai::types::{ChatCompletionFunctionCall, ChatCompletionFunctions, ChatCompletionRequestMessage, ChatCompletionResponseStream, CreateChatCompletionRequest, CreateChatCompletionResponse, Role, Stop};
+use async_openai::types::{ChatCompletionFunctionCall, ChatCompletionFunctions, ChatCompletionRequestMessage, ChatCompletionResponseStream, ChatCompletionStreamResponseDelta, CreateChatCompletionRequest, CreateChatCompletionResponse, FunctionCall, Role, Stop};
 use crate::utils::JsonMap;
 use crate::utils::token::tiktoken::{MODEL_TO_MAX_TOKENS, Tiktoken};
 
@@ -89,6 +89,52 @@ pub struct ChatMsg {
 impl Display for ChatMsg {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", serde_json::to_string_pretty(&self.content).unwrap())
+    }
+}
+
+impl ChatMsg {
+    pub fn merge_delta(&mut self, delta: &ChatCompletionStreamResponseDelta) {
+        const END_OP: Option<()> = Some(()); // To stop compiler complaining type error
+        // if we have a function call delta, we need to update the function call
+        delta.function_call
+            .as_ref()
+            .and_then(|fn_call_delta| {
+                // if the container message already has a function call, we need to update the function call
+                if let Some(fn_call) = self.content.function_call.as_mut() {
+                    fn_call_delta.name
+                        .as_ref()
+                        .and_then(|fn_name| {
+                            fn_call.name = fn_name.clone();
+                            END_OP
+                        });
+                    fn_call_delta.arguments
+                        .as_ref()
+                        .and_then(|fn_args| {
+                            fn_call.arguments.push_str(fn_args);
+                            END_OP
+                        });
+                } else {
+                    // if the container message does not have a function call, we need to create one
+                    self.content.function_call = Some(FunctionCall {
+                        name: fn_call_delta.name.as_ref().map_or_else(String::new, Clone::clone),
+                        arguments: fn_call_delta.arguments.as_ref().map_or_else(String::new, Clone::clone),
+                    });
+                }
+                END_OP
+            });
+        // if we have a content delta, we need to update the content
+        delta.content
+            .as_ref()
+            .and_then(|content_delta| {
+                // if the container message already has a content, we need to update the content
+                if let Some(content) = self.content.content.as_mut() {
+                    content.push_str(content_delta.as_str());
+                } else {
+                    // if the container message does not have a content, we need to create one
+                    self.content.content = Some(content_delta.clone());
+                }
+                END_OP
+            });
     }
 }
 
