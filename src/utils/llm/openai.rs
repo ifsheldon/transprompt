@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use async_openai::Client;
 use async_openai::config::Config;
 use async_openai::error::OpenAIError;
-use async_openai::types::{ChatCompletionFunctionCall, ChatCompletionFunctions, ChatCompletionRequestMessage, CreateChatCompletionRequest, CreateChatCompletionResponse, Role, Stop};
+use async_openai::types::{ChatCompletionFunctionCall, ChatCompletionFunctions, ChatCompletionRequestMessage, ChatCompletionResponseStream, CreateChatCompletionRequest, CreateChatCompletionResponse, Role, Stop};
 use crate::utils::JsonMap;
 use crate::utils::token::tiktoken::{MODEL_TO_MAX_TOKENS, Tiktoken};
 
@@ -152,12 +152,13 @@ impl<ClientConfig: Config + Debug> Conversation<ClientConfig> {
         }
     }
 
-    /// Commit a chat request to OpenAI LLM with the current conversation history.
-    pub async fn query_with_history(&self,
-                                    functions: Option<Vec<ChatCompletionFunctions>>,
-                                    function_call: Option<ChatCompletionFunctionCall>) -> Result<CreateChatCompletionResponse, OpenAIError> {
+    #[inline]
+    fn create_chat_request(&self,
+                           functions: Option<Vec<ChatCompletionFunctions>>,
+                           function_call: Option<ChatCompletionFunctionCall>,
+                           stream: bool) -> CreateChatCompletionRequest {
         let config = self.configs.clone();
-        let request = CreateChatCompletionRequest {
+        CreateChatCompletionRequest {
             model: config.model,
             messages: self.history.iter().map(|msg| msg.content.clone()).collect(),
             functions,
@@ -165,15 +166,32 @@ impl<ClientConfig: Config + Debug> Conversation<ClientConfig> {
             temperature: config.temperature,
             top_p: config.top_p,
             n: config.n,
-            stream: None,
+            stream: if stream { Some(true) } else { None },
             stop: config.stop,
             max_tokens: config.max_tokens,
             presence_penalty: config.presence_penalty,
             frequency_penalty: config.frequency_penalty,
             logit_bias: config.logit_bias,
             user: config.user,
-        };
-        self.client.chat().create(request).await
+        }
+    }
+
+
+    /// Commit a chat request to OpenAI LLM with the current conversation history.
+    pub async fn query_with_history(&self,
+                                    functions: Option<Vec<ChatCompletionFunctions>>,
+                                    function_call: Option<ChatCompletionFunctionCall>) -> Result<CreateChatCompletionResponse, OpenAIError> {
+        let chat_request = self.create_chat_request(functions, function_call, false);
+        self.client.chat().create(chat_request).await
+    }
+
+    /// Commit a chat request to OpenAI LLM with the current conversation history.
+    /// Returns a stream
+    pub async fn query_and_stream_with_history(&self,
+                                               functions: Option<Vec<ChatCompletionFunctions>>,
+                                               function_call: Option<ChatCompletionFunctionCall>) -> Result<ChatCompletionResponseStream, OpenAIError> {
+        let chat_request = self.create_chat_request(functions, function_call, true);
+        self.client.chat().create_stream(chat_request).await
     }
 
     pub fn truncate_history(&mut self) {
