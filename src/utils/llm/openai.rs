@@ -263,3 +263,124 @@ impl<ClientConfig: Config + Debug> Conversation<ClientConfig> {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use std::io::{stdout, Write};
+    use anyhow::Result;
+    use async_openai::Client;
+    use async_openai::config::AzureConfig;
+    use async_openai::types::{ChatCompletionFunctionsArgs, ChatCompletionRequestMessageArgs, CreateChatCompletionRequestArgs, Role};
+    use serde_json::json;
+    use futures::StreamExt;
+    use crate::utils::llm::openai::ChatMsg;
+
+    #[derive(Debug, Clone, serde::Deserialize)]
+    struct AzureTestConfigs {
+        api_version: String,
+        deployment_id: String,
+        api_base: String,
+        api_key: String,
+    }
+
+    #[derive(Debug, Clone, serde::Deserialize)]
+    struct WeatherFunctionArguments {
+        location: String,
+        unit: Option<String>,
+    }
+
+    fn print_immediately(msg: impl Into<String>) {
+        print!("{}", msg.into());
+        stdout().flush().unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_merge_delta() -> Result<()> {
+        // read configs from file
+        let azure_test_configs: AzureTestConfigs = serde_json::from_str(std::fs::read_to_string(".azure_configs.json")?.as_str())?;
+        // adapted the code from https://github.com/64bit/async-openai/blob/main/examples/function-call-stream/src/main.rs
+        let client = Client::with_config(
+            AzureConfig::new()
+                .with_api_base(azure_test_configs.api_base)
+                .with_api_key(azure_test_configs.api_key)
+                .with_api_version(azure_test_configs.api_version)
+                .with_deployment_id(azure_test_configs.deployment_id)
+        );
+
+        let request = CreateChatCompletionRequestArgs::default()
+            .max_tokens(512u16)
+            .model("gpt-3.5-turbo-0613")
+            .messages([ChatCompletionRequestMessageArgs::default()
+                .role(Role::User)
+                .content("What's the weather like in Boston?")
+                .build()?])
+            .functions([ChatCompletionFunctionsArgs::default()
+                .name("get_current_weather")
+                .description("Get the current weather in a given location")
+                .parameters(json!({
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "The city and state, e.g. San Francisco, CA",
+                    },
+                    "unit": { "type": "string", "enum": ["celsius", "fahrenheit"] },
+                },
+                "required": ["location"],
+            }))
+                .build()?])
+            .function_call("auto")
+            .build()?;
+
+        let mut stream = client.chat().create_stream(request).await?;
+        let mut fn_name = String::new();
+        let mut fn_args = String::new();
+        let mut function_called = false;
+        let mut assistant_message = ChatMsg {
+            msg: ChatCompletionRequestMessageArgs::default()
+                .role(Role::Assistant)
+                .build()?,
+            metadata: None,
+        };
+        while let Some(result) = stream.next().await {
+            match result {
+                Ok(response) => {
+                    for chat_choice in response.choices {
+                        assistant_message.merge_delta(&chat_choice.delta);
+                        if let Some(fn_call) = &chat_choice.delta.function_call {
+                            print_immediately(format!("function_call: {:?}\n", fn_call));
+                            if let Some(name) = &fn_call.name {
+                                fn_name = name.clone();
+                            }
+                            if let Some(args) = &fn_call.arguments {
+                                fn_args.push_str(args);
+                            }
+                        }
+                        if let Some(finish_reason) = &chat_choice.finish_reason {
+                            if finish_reason == "function_call" {
+                                print_immediately("\nfunction called\n");
+                                function_called = true;
+                            }
+                        } else if let Some(content) = &chat_choice.delta.content {
+                            print_immediately(format!("content: {}", content));
+                        }
+                    }
+                }
+                Err(err) => {
+                    print_immediately(format!("Error: {}", err));
+                }
+            }
+            stdout().flush()?;
+        }
+        print_immediately(format!("fn_name: {}\nfn_args: {}\n", fn_name, fn_args));
+
+        assert_eq!(fn_name, assistant_message.msg.function_call.as_ref().unwrap().name.as_str());
+        assert_eq!(fn_args, assistant_message.msg.function_call.as_ref().unwrap().arguments.as_str());
+
+        let fn_args: WeatherFunctionArguments = serde_json::from_str(fn_args.as_str())?;
+        assert_eq!(fn_name, "get_current_weather");
+        assert!(function_called);
+
+        Ok(())
+    }
+}
