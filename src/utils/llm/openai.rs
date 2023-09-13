@@ -94,7 +94,7 @@ impl Display for ChatMsg {
 
 /// A conversation with OpenAI LLM.
 #[derive(Clone)]
-pub struct Conversation<ClientConfig: Config> {
+pub struct Conversation<ClientConfig: Config + Debug> {
     pub client: Client<ClientConfig>,
     pub configs: ConversationConfig,
     pub history: Vec<ChatMsg>,
@@ -102,13 +102,24 @@ pub struct Conversation<ClientConfig: Config> {
     pub tiktoken: Tiktoken,
 }
 
-impl<ClientConfig: Config> Display for Conversation<ClientConfig> {
+impl<ClientConfig: Config + Debug> Display for Conversation<ClientConfig> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", serde_json::to_string_pretty(&self.history).unwrap())
     }
 }
 
-impl<ClientConfig: Config> Conversation<ClientConfig> {
+impl<ClientConfig: Config + Debug> Debug for Conversation<ClientConfig> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, r#"
+client: {:?}
+configs: {}
+history: {}
+auto_truncate_history: {}
+"#, self.client, serde_json::to_string_pretty(&self.configs).unwrap(), serde_json::to_string_pretty(&self.history).unwrap(), self.auto_truncate_history)
+    }
+}
+
+impl<ClientConfig: Config + Debug> Conversation<ClientConfig> {
     /// Create a new conversation with OpenAI LLM.
     pub fn new(client: Client<ClientConfig>,
                configs: ConversationConfig,
