@@ -336,27 +336,32 @@ mod test {
                 .build()?,
             metadata: None,
         };
-        while let Some(result) = stream.next().await {
-            match result {
-                Ok(response) => {
-                    for chat_choice in response.choices {
-                        assistant_message.merge_delta(&chat_choice.delta);
-                        chat_choice.delta.function_call
-                            .ok_then_do(|fn_call| {
-                                print_immediately(format!("function_call: {:?}\n", fn_call));
-                                fn_call.name
-                                    .ok_then_do(|name| fn_name = name.clone());
-                                fn_call.arguments
-                                    .ok_then_do(|args| fn_args.push_str(args));
-                            });
-                        if let Some(finish_reason) = &chat_choice.finish_reason {
-                            if finish_reason == "function_call" {
-                                print_immediately("\nfunction called\n");
-                                function_called = true;
-                            }
-                        } else if let Some(content) = &chat_choice.delta.content {
-                            print_immediately(format!("content: {}", content));
+        while let Some(chunk) = stream.next().await {
+            match chunk {
+                Ok(delta) => {
+                    if delta.choices.is_empty() {
+                        // the first chunk is somehow empty
+                        print_immediately(format!("No choices in chunk\nChunk: {:?}\n", delta));
+                        continue;
+                    }
+                    print_immediately(format!("Chunk: {:?}\n", delta));
+                    let chat_choice = &delta.choices[0];
+                    assistant_message.merge_delta(&chat_choice.delta);
+                    chat_choice.delta.function_call
+                        .ok_then_do(|fn_call| {
+                            print_immediately(format!("function_call: {:?}\n", fn_call));
+                            fn_call.name
+                                .ok_then_do(|name| fn_name = name.clone());
+                            fn_call.arguments
+                                .ok_then_do(|args| fn_args.push_str(args));
+                        });
+                    if let Some(finish_reason) = &chat_choice.finish_reason {
+                        if finish_reason == "function_call" {
+                            print_immediately("\nfunction called\n");
+                            function_called = true;
                         }
+                    } else if let Some(content) = &chat_choice.delta.content {
+                        print_immediately(format!("content: {}", content));
                     }
                 }
                 Err(err) => {
