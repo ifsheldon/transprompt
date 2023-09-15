@@ -270,14 +270,6 @@ mod test {
     use crate::utils::llm::openai::ChatMsg;
 
     #[derive(Debug, Clone, serde::Deserialize)]
-    struct AzureTestConfigs {
-        api_version: String,
-        deployment_id: String,
-        api_base: String,
-        api_key: String,
-    }
-
-    #[derive(Debug, Clone, serde::Deserialize)]
     struct WeatherFunctionArguments {
         location: String,
         unit: Option<String>,
@@ -291,15 +283,9 @@ mod test {
     #[tokio::test]
     async fn test_merge_delta() -> Result<()> {
         // read configs from file
-        let azure_test_configs: AzureTestConfigs = serde_json::from_str(std::fs::read_to_string(".azure_configs.json")?.as_str())?;
+        let azure_test_configs: AzureConfig = serde_json::from_str(std::fs::read_to_string(".azure_configs.json")?.as_str())?;
         // adapted the code from https://github.com/64bit/async-openai/blob/main/examples/function-call-stream/src/main.rs
-        let client = Client::with_config(
-            AzureConfig::new()
-                .with_api_base(azure_test_configs.api_base)
-                .with_api_key(azure_test_configs.api_key)
-                .with_api_version(azure_test_configs.api_version)
-                .with_deployment_id(azure_test_configs.deployment_id)
-        );
+        let client = Client::with_config(azure_test_configs);
 
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(512u16)
