@@ -33,7 +33,7 @@ qdrant-client = "~1.4"
 # Token related
 tiktoken-rs = { version = "~0.5", features = ["async-openai"] }
 # LLM
-async-openai = "~0.14"
+async-openai = ">=0.14.2"
 
 [dev-dependencies]
 tokio = { version = "1.32", features = ["full"] }
