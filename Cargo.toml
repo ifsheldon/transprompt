@@ -27,6 +27,7 @@ log = "0.4"
 anyhow = "~1.0"
 url = "~2.4"
 readonly = "~0.2"
+termimad = "0.20"
 
 # Database related
 qdrant-client = "~1.4"
