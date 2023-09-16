@@ -5,6 +5,7 @@ use async_openai::Client;
 use async_openai::config::Config;
 use async_openai::error::OpenAIError;
 use async_openai::types::{ChatCompletionFunctionCall, ChatCompletionFunctions, ChatCompletionRequestMessage, ChatCompletionResponseStream, ChatCompletionStreamResponseDelta, CreateChatCompletionRequest, CreateChatCompletionResponse, FunctionCall, Role, Stop};
+use termimad::minimad::lines;
 use crate::utils::helper_traits::{ThenDo, ThenDoMut};
 use crate::utils::JsonMap;
 use crate::utils::token::tiktoken::{MODEL_TO_MAX_TOKENS, Tiktoken};
@@ -94,10 +95,11 @@ impl Display for ChatMsg {
 }
 
 impl ChatMsg {
-    pub fn merge_delta(&mut self, delta: &ChatCompletionStreamResponseDelta) {
+    pub fn merge_delta(&mut self, delta: &ChatCompletionStreamResponseDelta) -> (bool, bool) {
         // if we have a function call delta, we need to update the function call
+        let mut function_call_updated = false;
         delta.function_call
-            .ok_then_do(|fn_call_delta|
+            .ok_then_do(|fn_call_delta| {
                 self.msg.function_call
                     .ok_then_do_otherwise_mut(
                         |func_call| {
@@ -113,21 +115,26 @@ impl ChatMsg {
                                 name: fn_call_delta.name.as_ref().map_or_else(String::new, Clone::clone),
                                 arguments: fn_call_delta.arguments.as_ref().map_or_else(String::new, Clone::clone),
                             });
-                        })
-            );
+                        },
+                    );
+                function_call_updated = true;
+            });
 
         // if we have a content delta, we need to update the content
+        let mut content_updated = false;
         delta.content
-            .ok_then_do(
-                |content_delta|
-                    self.msg.content.ok_then_do_otherwise_mut(|content| {
-                        // if the container message already has a content, we need to update the content
-                        content.push_str(content_delta.as_str());
-                    }, |content_option| {
-                        // if the container message does not have a content, we need to create one
-                        *content_option = Some(content_delta.clone());
-                    })
-            );
+            .ok_then_do(|content_delta| {
+                self.msg.content.ok_then_do_otherwise_mut(|content| {
+                    // if the container message already has a content, we need to update the content
+                    content.push_str(content_delta.as_str());
+                }, |content_option| {
+                    // if the container message does not have a content, we need to create one
+                    *content_option = Some(content_delta.clone());
+                });
+                content_updated = true;
+            });
+
+        return (function_call_updated, content_updated);
     }
 }
 
