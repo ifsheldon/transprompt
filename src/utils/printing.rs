@@ -56,7 +56,7 @@ impl AnchoredMarkdownPrinter {
 
     pub fn activate(&mut self, hide_cursor: bool) {
         if self.activated {
-            eprintln!("IncrementalMarkdownPrinter is already activated");
+            eprintln!("AnchoredMarkdownPrinter is already activated");
             return;
         }
         self.activated = true;
@@ -68,7 +68,7 @@ impl AnchoredMarkdownPrinter {
     }
 
     pub fn set_anchor_with(&mut self, anchor_position: (u16, u16)) {
-        assert!(self.activated, "IncrementalMarkdownPrinter must be activated before anchoring cursor");
+        assert!(self.activated, "AnchoredMarkdownPrinter must be activated before anchoring cursor");
         self.cursor_anchor = Some(anchor_position);
     }
 
@@ -78,7 +78,7 @@ impl AnchoredMarkdownPrinter {
 
     pub fn deactivate(&mut self) {
         if !self.activated {
-            eprintln!("IncrementalMarkdownPrinter is already deactivated");
+            eprintln!("AnchoredMarkdownPrinter is already deactivated");
             return;
         }
         self.activated = false;
@@ -95,7 +95,7 @@ impl AnchoredMarkdownPrinter {
     }
 
     fn print_rendered(&mut self, rendered_markdown: &RenderedMarkdown) {
-        assert!(self.activated, "IncrementalMarkdownPrinter must be activated before printing");
+        assert!(self.activated, "AnchoredMarkdownPrinter must be activated before printing");
         let cursor_anchor = self.cursor_anchor.unwrap();
         // restore cursor position to anchor
         stdout()
