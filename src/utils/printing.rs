@@ -20,9 +20,44 @@ impl From<FmtText<'_, '_>> for RenderedMarkdown {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub enum WrapWidth {
+    None,
+    Width(usize),
+    AutoFitTerminalWidth,
+}
+
+impl Into<Option<usize>> for WrapWidth {
+    fn into(self) -> Option<usize> {
+        match self {
+            WrapWidth::None => None,
+            WrapWidth::Width(width) => Some(width),
+            WrapWidth::AutoFitTerminalWidth => {
+                let (width, _) = termimad::terminal_size();
+                Some(width as usize)
+            }
+        }
+    }
+}
+
+impl From<Option<usize>> for WrapWidth {
+    fn from(width: Option<usize>) -> Self {
+        match width {
+            None => WrapWidth::None,
+            Some(width) => WrapWidth::Width(width),
+        }
+    }
+}
+
+impl From<usize> for WrapWidth {
+    fn from(width: usize) -> Self {
+        WrapWidth::Width(width)
+    }
+}
+
 pub struct AnchoredMarkdownPrinter {
     pub skin: MadSkin,
-    pub wrap_width: Option<usize>,
+    pub wrap_width: WrapWidth,
     stdout: Stdout,
     cursor_anchor: Option<(u16, u16)>,
     activated: bool,
@@ -33,7 +68,7 @@ impl Default for AnchoredMarkdownPrinter {
     fn default() -> Self {
         Self {
             skin: MadSkin::default(),
-            wrap_width: None,
+            wrap_width: WrapWidth::None,
             stdout: stdout(),
             cursor_anchor: None,
             activated: false,
@@ -92,7 +127,9 @@ impl AnchoredMarkdownPrinter {
 
 
     pub fn print(&mut self, partial_markdown: &str) {
-        let rendered_markdown = FmtText::from(&self.skin, partial_markdown, self.wrap_width).into();
+        let rendered_markdown = FmtText::from(&self.skin,
+                                              partial_markdown,
+                                              self.wrap_width.into()).into();
         self.print_rendered(&rendered_markdown);
     }
 
@@ -181,7 +218,9 @@ impl IncrementalMarkdownPrinter {
     pub fn print(&mut self) {
         assert!(self.activated(), "IncrementalMarkdownPrinter must be activated before printing");
         if self.buffer_changed {
-            let rendered = FmtText::from(&self.anchored_printer.skin, &self.markdown_string_buffer, self.anchored_printer.wrap_width.clone()).into();
+            let rendered = FmtText::from(&self.anchored_printer.skin,
+                                         &self.markdown_string_buffer,
+                                         self.anchored_printer.wrap_width.into()).into();
             self.rendered_string_cache = Some(rendered);
             self.buffer_changed = false;
         }
