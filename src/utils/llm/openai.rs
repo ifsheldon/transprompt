@@ -5,7 +5,6 @@ use async_openai::Client;
 use async_openai::config::Config;
 use async_openai::error::OpenAIError;
 use async_openai::types::{ChatCompletionFunctionCall, ChatCompletionFunctions, ChatCompletionRequestMessage, ChatCompletionResponseStream, ChatCompletionStreamResponseDelta, CreateChatCompletionRequest, CreateChatCompletionResponse, FunctionCall, Role, Stop};
-use termimad::minimad::lines;
 use crate::utils::helper_traits::{ThenDo, ThenDoMut};
 use crate::utils::JsonMap;
 use crate::utils::token::tiktoken::{MODEL_TO_MAX_TOKENS, Tiktoken};
