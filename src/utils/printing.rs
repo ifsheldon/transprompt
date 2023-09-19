@@ -107,18 +107,18 @@ impl AnchoredMarkdownPrinter {
         stdout().flush().unwrap();
         // update cursor anchor
         // the cursor position is relative to the terminal not the screen/history, so the anchor "floats/drifts" when a scrollbar appears.
-        let mut new_cursor_anchor = cursor::position().unwrap();
-        if new_cursor_anchor.0 > columns {
-            new_cursor_anchor.0 -= columns;
+        let (mut new_col, mut new_row) = cursor::position().unwrap();
+        if new_col > columns {
+            new_col -= columns;
         } else {
-            new_cursor_anchor.0 = 0;
+            new_col = 0;
         }
-        if new_cursor_anchor.1 > rows {
-            new_cursor_anchor.1 -= rows;
+        if new_row > rows {
+            new_row -= rows;
         } else {
-            new_cursor_anchor.1 = 0;
+            new_row = 0;
         }
-        self.set_anchor_with(new_cursor_anchor);
+        self.set_anchor_with((new_col, new_row));
     }
 }
 
