@@ -1,4 +1,4 @@
-use std::io::{stdout, Write};
+use std::io::{stdout, Stdout, Write};
 use termimad::crossterm::{cursor, ExecutableCommand};
 use termimad::crossterm::terminal::Clear;
 use termimad::crossterm::terminal::ClearType::FromCursorDown;
@@ -23,6 +23,7 @@ impl From<FmtText<'_, '_>> for RenderedMarkdown {
 pub struct AnchoredMarkdownPrinter {
     pub skin: MadSkin,
     pub wrap_width: Option<usize>,
+    stdout: Stdout,
     cursor_anchor: Option<(u16, u16)>,
     activated: bool,
     hide_cursor: bool,
@@ -33,6 +34,7 @@ impl Default for AnchoredMarkdownPrinter {
         Self {
             skin: MadSkin::default(),
             wrap_width: None,
+            stdout: stdout(),
             cursor_anchor: None,
             activated: false,
             hide_cursor: false,
@@ -43,9 +45,9 @@ impl Default for AnchoredMarkdownPrinter {
 impl AnchoredMarkdownPrinter {
     pub fn hide_cursor(&mut self, hide_cursor: bool) {
         if self.hide_cursor && !hide_cursor {
-            stdout().execute(cursor::Show).unwrap();
+            self.stdout.execute(cursor::Show).unwrap();
         } else if !self.hide_cursor && hide_cursor {
-            stdout().execute(cursor::Hide).unwrap();
+            self.stdout.execute(cursor::Hide).unwrap();
         }
         self.hide_cursor = hide_cursor;
     }
@@ -62,7 +64,7 @@ impl AnchoredMarkdownPrinter {
         self.activated = true;
         self.set_anchor();
         if hide_cursor {
-            stdout().execute(cursor::Hide).unwrap();
+            self.stdout.execute(cursor::Hide).unwrap();
         }
         self.hide_cursor = hide_cursor;
     }
@@ -98,13 +100,13 @@ impl AnchoredMarkdownPrinter {
         assert!(self.activated, "AnchoredMarkdownPrinter must be activated before printing");
         let cursor_anchor = self.cursor_anchor.unwrap();
         // restore cursor position to anchor
-        stdout()
+        self.stdout
             .execute(cursor::MoveTo(cursor_anchor.0, cursor_anchor.1)).unwrap()
             .execute(Clear(FromCursorDown)).unwrap(); // clear previous output
         let rows = rendered_markdown.line_width.len() as u16;
         let columns = rendered_markdown.line_width.last().copied().unwrap_or(0) as u16;
-        print!("{}", rendered_markdown.text);
-        stdout().flush().unwrap();
+        write!(self.stdout, "{}", rendered_markdown.text).unwrap();
+        self.stdout.flush().unwrap();
         // update cursor anchor
         // the cursor position is relative to the terminal not the screen/history, so the anchor "floats/drifts" when a scrollbar appears.
         let (mut new_col, mut new_row) = cursor::position().unwrap();
