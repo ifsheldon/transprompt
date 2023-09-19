@@ -173,7 +173,7 @@ impl Drop for AnchoredMarkdownPrinter {
 
 #[derive(Debug)]
 pub struct IncrementalMarkdownPrinter {
-    pub anchored_printer: AnchoredMarkdownPrinter,
+    anchored_printer: AnchoredMarkdownPrinter,
     markdown_string_buffer: String,
     buffer_changed: bool,
     rendered_string_cache: Option<RenderedMarkdown>,
@@ -193,6 +193,32 @@ impl Default for IncrementalMarkdownPrinter {
 impl IncrementalMarkdownPrinter {
     pub fn hide_cursor(&mut self, hide_cursor: bool) {
         self.anchored_printer.hide_cursor(hide_cursor);
+    }
+
+    pub fn with_skin(mut self, skin: MadSkin) -> Self {
+        assert!(!self.activated(), "IncrementalMarkdownPrinter must be deactivated before changing skin");
+        self.anchored_printer.skin = skin;
+        self
+    }
+
+    pub fn with_wrap_width(mut self, wrap_width: WrapWidth) -> Self {
+        assert!(!self.activated(), "IncrementalMarkdownPrinter must be deactivated before changing wrap width");
+        self.anchored_printer.wrap_width = wrap_width;
+        self
+    }
+
+    pub fn set_skin(&mut self, skin: MadSkin) {
+        self.anchored_printer.skin = skin;
+        if self.activated() {
+            self.buffer_changed = true;
+        }
+    }
+
+    pub fn set_wrap_width(&mut self, wrap_width: WrapWidth) {
+        self.anchored_printer.wrap_width = wrap_width;
+        if self.activated() {
+            self.buffer_changed = true;
+        }
     }
 
     pub fn activate(&mut self, hide_cursor: bool) {
