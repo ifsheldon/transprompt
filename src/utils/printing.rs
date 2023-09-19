@@ -4,6 +4,7 @@ use termimad::crossterm::terminal::Clear;
 use termimad::crossterm::terminal::ClearType::FromCursorDown;
 use termimad::{FmtLine, FmtText, MadSkin};
 
+#[derive(Debug, Clone)]
 struct RenderedMarkdown {
     text: String,
     line_width: Vec<usize>,
@@ -55,6 +56,7 @@ impl From<usize> for WrapWidth {
     }
 }
 
+#[derive(Debug)]
 pub struct AnchoredMarkdownPrinter {
     pub skin: MadSkin,
     pub wrap_width: WrapWidth,
@@ -169,6 +171,7 @@ impl Drop for AnchoredMarkdownPrinter {
     }
 }
 
+#[derive(Debug)]
 pub struct IncrementalMarkdownPrinter {
     pub anchored_printer: AnchoredMarkdownPrinter,
     markdown_string_buffer: String,
