@@ -14,6 +14,7 @@ pub mod token;
 pub mod llm;
 pub mod postprocess;
 pub mod embedding;
+#[cfg(feature = "terminal_printing")]
 pub mod printing;
 pub(crate) mod prompt_processing;
 pub(crate) mod helper_traits;

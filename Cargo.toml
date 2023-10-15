@@ -27,7 +27,7 @@ log = "0.4"
 anyhow = "~1.0"
 url = "~2.4"
 readonly = "~0.2"
-termimad = "0.20"
+termimad = { version = "0.20", optional = true }
 
 # Database related
 qdrant-client = "~1.4"
@@ -40,3 +40,6 @@ async-openai = ">=0.14.2"
 tokio = { version = "1.32", features = ["full"] }
 futures = "0.3"
 ctrlc = "3.4"
+
+[features]
+terminal_printing = ["termimad"]
