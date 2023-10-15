@@ -10,7 +10,7 @@ use crate::utils::JsonMap;
 use crate::utils::token::tiktoken::{MODEL_TO_MAX_TOKENS, Tiktoken};
 
 /// Configuration for OpenAI LLM in a conversation setting. Partially copied from [async_openai::types::CreateChatCompletionRequest].
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ConversationConfig {
     /// ID of the model to use.
     /// See the [model endpoint compatibility](https://platform.openai.com/docs/models/model-endpoint-compatibility) table for details on which models work with the Chat API.
@@ -81,7 +81,7 @@ impl Default for ConversationConfig {
 }
 
 /// A message in a conversation with optional metadata.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ChatMsg {
     pub msg: ChatCompletionRequestMessage,
     pub metadata: Option<JsonMap>,
