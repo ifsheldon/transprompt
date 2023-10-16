@@ -97,6 +97,8 @@
 //!
 
 
+pub use async_openai;
+
 pub mod prompt;
 pub mod filler;
 pub mod utils;
