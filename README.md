@@ -2,7 +2,7 @@
 
 Prompt-centric framework for developing LLM applications in Rust
 
-**Note: `transprompt` is now a WIP, so the APIs are subject to change.**
+**Note: `transprompt` is not stable yet, so the APIs are subject to change.**
 
 ## Usage
 
