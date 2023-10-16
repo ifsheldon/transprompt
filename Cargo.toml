@@ -30,11 +30,11 @@ readonly = "~0.2"
 termimad = { version = "0.20", optional = true }
 
 # Database related
-qdrant-client = "~1.4"
+qdrant-client = { version = "~1.6", optional = true }
 # Token related
-tiktoken-rs = { version = "~0.5", features = ["async-openai"] }
+tiktoken-rs = "0.5"
 # LLM
-async-openai = ">=0.14.2"
+async-openai = { path = "../async-openai/async-openai", default-features = false, features = ["wasm"] }
 
 [dev-dependencies]
 tokio = { version = "1.32", features = ["full"] }
@@ -42,4 +42,7 @@ futures = "0.3"
 ctrlc = "3.4"
 
 [features]
+default = ["terminal_printing", "async-openai/default", "qdrant"]
 terminal_printing = ["termimad"]
+wasm = ["async-openai/wasm"]
+qdrant = ["qdrant-client"]

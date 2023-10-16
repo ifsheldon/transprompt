@@ -102,6 +102,7 @@ impl<T> OpenAIEmbedding<T> where T: Config + Send + Sync {
     }
 }
 
+#[cfg(not(feature = "wasm"))]
 #[async_trait]
 impl <T> AsyncEmbed for OpenAIEmbedding<T> where T: Config + Send + Sync {
     type OutputExtra = EmbeddingUsage;
@@ -111,6 +112,7 @@ impl <T> AsyncEmbed for OpenAIEmbedding<T> where T: Config + Send + Sync {
     }
 }
 
+#[cfg(not(feature = "wasm"))]
 #[async_trait]
  impl<T> AsyncSimplyEmbed for OpenAIEmbedding<T> where T: Config + Send + Sync {
     async fn embed(&self, string: impl Into<String> + Send) -> Result<EmbedVec> {

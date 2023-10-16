@@ -9,6 +9,7 @@
 
 use serde_json::{Map, Value};
 
+#[cfg(feature = "qdrant")]
 pub mod vec_stores;
 pub mod token;
 pub mod llm;
