@@ -34,7 +34,7 @@ qdrant-client = { version = "~1.6", optional = true }
 # Token related
 tiktoken-rs = "0.5"
 # LLM
-async-openai = { path = "../async-openai/async-openai", default-features = false, features = ["wasm"] }
+async-openai = { git = "https://github.com/ifsheldon/async-openai.git", branch = "basic_wasm_support", default-features = false }
 
 [dev-dependencies]
 tokio = { version = "1.32", features = ["full"] }
