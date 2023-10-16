@@ -6,6 +6,7 @@ edition = "2021"
 authors = ["feng liang <feng.liang@kaust.edu.sa>"]
 license-file = "LICENSE"
 repository = "https://github.com/ifsheldon/transprompt"
+homepage = "https://github.com/ifsheldon/transprompt"
 
 [package]
 name = "transprompt"
@@ -14,6 +15,7 @@ edition.workspace = true
 authors.workspace = true
 license-file.workspace = true
 repository.workspace = true
+homepage.workspace = true
 readme = "README.md"
 description = "Prompt-centric framework for developing LLM applications in Rust"
 
