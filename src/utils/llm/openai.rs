@@ -1,10 +1,11 @@
 use std::collections::HashMap;
-use std::fmt::{Debug, Formatter, Display};
-use serde::{Deserialize, Serialize};
+use std::fmt::{Debug, Display, Formatter};
+
 use async_openai::Client;
-use async_openai::config::Config;
 use async_openai::error::OpenAIError;
 use async_openai::types::{ChatCompletionFunctionCall, ChatCompletionFunctions, ChatCompletionRequestMessage, ChatCompletionResponseStream, ChatCompletionStreamResponseDelta, CreateChatCompletionRequest, CreateChatCompletionResponse, FunctionCall, Role, Stop};
+use serde::{Deserialize, Serialize};
+
 use crate::utils::helper_traits::{ThenDo, ThenDoMut};
 use crate::utils::JsonMap;
 use crate::utils::token::tiktoken::{MODEL_TO_MAX_TOKENS, Tiktoken};
@@ -139,21 +140,21 @@ impl ChatMsg {
 
 /// A conversation with OpenAI LLM.
 #[derive(Clone)]
-pub struct Conversation<ClientConfig: Config + Debug> {
-    pub client: Client<ClientConfig>,
+pub struct Conversation {
+    pub client: Client,
     pub configs: ConversationConfig,
     pub history: Vec<ChatMsg>,
     pub auto_truncate_history: bool,
     pub tiktoken: Tiktoken,
 }
 
-impl<ClientConfig: Config + Debug> Display for Conversation<ClientConfig> {
+impl Display for Conversation {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", serde_json::to_string_pretty(&self.history).unwrap())
     }
 }
 
-impl<ClientConfig: Config + Debug> Debug for Conversation<ClientConfig> {
+impl Debug for Conversation {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, r#"
 client: {:?}
@@ -164,9 +165,9 @@ auto_truncate_history: {}
     }
 }
 
-impl<ClientConfig: Config + Debug> Conversation<ClientConfig> {
+impl Conversation {
     /// Create a new conversation with OpenAI LLM.
-    pub fn new(client: Client<ClientConfig>,
+    pub fn new(client: Client,
                configs: ConversationConfig,
                auto_truncate_history: bool) -> Self {
         let tiktoken = Tiktoken::new(configs.model.clone()).unwrap();
@@ -266,12 +267,14 @@ impl<ClientConfig: Config + Debug> Conversation<ClientConfig> {
 #[cfg(test)]
 mod test {
     use std::io::{stdout, Write};
+
     use anyhow::Result;
     use async_openai::Client;
     use async_openai::config::AzureConfig;
     use async_openai::types::{ChatCompletionFunctionsArgs, ChatCompletionRequestMessageArgs, CreateChatCompletionRequestArgs, Role};
-    use serde_json::json;
     use futures::StreamExt;
+    use serde_json::json;
+
     use crate::utils::helper_traits::ThenDo;
     use crate::utils::llm::openai::ChatMsg;
 

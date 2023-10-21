@@ -1,6 +1,5 @@
 use anyhow::Result;
 use async_openai::Client;
-use async_openai::config::Config;
 use async_openai::types::{CreateEmbeddingRequest, EmbeddingUsage};
 use async_openai::types::EmbeddingInput;
 use async_trait::async_trait;
@@ -67,12 +66,12 @@ impl<T: Embed + Sync> AsyncEmbed for T {
 
 /// Embedding model from OpenAI API.
 #[derive(Clone, Debug)]
-pub struct OpenAIEmbedding<T: Config + Send + Sync> {
-    pub client: Client<T>,
+pub struct OpenAIEmbedding {
+    pub client: Client,
     pub embedding_model: String,
 }
 
- impl<T> GetEmbedDim for OpenAIEmbedding<T> where T: Config + Send + Sync {
+impl GetEmbedDim for OpenAIEmbedding {
     fn embedding_dim(&self) -> Option<usize> {
         let dim = match self.embedding_model.as_str() {
             "text-embedding-ada-002" => 1536,
@@ -86,8 +85,7 @@ pub struct OpenAIEmbedding<T: Config + Send + Sync> {
     }
 }
 
-impl<T> OpenAIEmbedding<T> where T: Config + Send + Sync {
-
+impl OpenAIEmbedding {
     /// send a request to the OpenAI API to embed a string. Returns the embedding vector and embedding usage, or an error.
     async fn request_embed(&self, string: impl Into<String>) -> Result<(Vec<f32>, EmbeddingUsage)> {
         let request = CreateEmbeddingRequest {
@@ -99,23 +97,5 @@ impl<T> OpenAIEmbedding<T> where T: Config + Send + Sync {
         let emb = response.data.pop().unwrap().embedding;
         let usage = response.usage;
         Ok((emb, usage))
-    }
-}
-
-#[cfg(not(feature = "wasm"))]
-#[async_trait]
-impl <T> AsyncEmbed for OpenAIEmbedding<T> where T: Config + Send + Sync {
-    type OutputExtra = EmbeddingUsage;
-
-    async fn embed(&self, string: impl Into<String> + Send) -> Result<(EmbedVec, Self::OutputExtra)> {
-        self.request_embed(string).await
-    }
-}
-
-#[cfg(not(feature = "wasm"))]
-#[async_trait]
- impl<T> AsyncSimplyEmbed for OpenAIEmbedding<T> where T: Config + Send + Sync {
-    async fn embed(&self, string: impl Into<String> + Send) -> Result<EmbedVec> {
-        self.request_embed(string).await.map(|(emb, _)| emb)
     }
 }
