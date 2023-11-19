@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
+use std::ops::Index;
 
 use async_openai::Client;
 use async_openai::error::OpenAIError;
@@ -96,45 +97,75 @@ impl Display for ChatMsg {
 
 impl ChatMsg {
     pub fn merge_delta(&mut self, delta: &ChatCompletionStreamResponseDelta) -> (bool, bool) {
-        // if we have a function call delta, we need to update the function call
-        let mut function_call_updated = false;
-        delta.function_call
-            .ok_then_do(|fn_call_delta| {
-                self.msg.function_call
-                    .ok_then_do_otherwise_mut(
-                        |func_call| {
-                            // if the container message already has a function call, we need to update the function call
-                            fn_call_delta.name
-                                .ok_then_do(|fn_name| func_call.name = fn_name.clone());
-                            fn_call_delta.arguments
-                                .ok_then_do(|fn_args| func_call.arguments.push_str(fn_args));
-                        },
-                        |func_call_option| {
-                            // if the container message does not have a function call, we need to create one
-                            *func_call_option = Some(FunctionCall {
-                                name: fn_call_delta.name.as_ref().map_or_else(String::new, Clone::clone),
-                                arguments: fn_call_delta.arguments.as_ref().map_or_else(String::new, Clone::clone),
-                            });
-                        },
-                    );
-                function_call_updated = true;
-            });
+        match self.msg {
+            ChatCompletionRequestMessage::Assistant(ref mut msg) => {
+                // if we have a function call delta, we need to update the function call
+                let mut function_call_updated = false;
+                delta.function_call
+                    .ok_then_do(|fn_call_delta| {
+                        msg
+                            .function_call
+                            .ok_then_do_otherwise_mut(
+                                |func_call| {
+                                    // if the container message already has a function call, we need to update the function call
+                                    fn_call_delta.name
+                                        .ok_then_do(|fn_name| func_call.name = fn_name.clone());
+                                    fn_call_delta.arguments
+                                        .ok_then_do(|fn_args| func_call.arguments.push_str(fn_args));
+                                },
+                                |func_call_option| {
+                                    // if the container message does not have a function call, we need to create one
+                                    *func_call_option = Some(FunctionCall {
+                                        name: fn_call_delta.name.as_ref().map_or_else(String::new, Clone::clone),
+                                        arguments: fn_call_delta.arguments.as_ref().map_or_else(String::new, Clone::clone),
+                                    });
+                                },
+                            );
+                        function_call_updated = true;
+                    });
 
-        // if we have a content delta, we need to update the content
-        let mut content_updated = false;
-        delta.content
-            .ok_then_do(|content_delta| {
-                self.msg.content.ok_then_do_otherwise_mut(|content| {
-                    // if the container message already has a content, we need to update the content
-                    content.push_str(content_delta.as_str());
-                }, |content_option| {
-                    // if the container message does not have a content, we need to create one
-                    *content_option = Some(content_delta.clone());
-                });
-                content_updated = true;
-            });
+                let mut tool_call_updated = false;
+                // TODO: update tool calls
+                delta.tool_calls
+                    .ok_then_do(|tool_call_deltas| {
+                        msg
+                            .tool_calls
+                            .ok_then_do_otherwise_mut(
+                                |tool_calls| {
+                                    // if the container message already has a tool call, we need to update the tool call
+                                    tool_call_deltas
+                                        .iter()
+                                        .for_each(|tool_call_delta| {
+                                            let tool_call = tool_calls.get_mut(tool_call_delta.index as usize);
+                                            unimplemented!()
+                                        })
+                                },
+                                |tool_calls_option| {
+                                    // if the container message does not have a tool call, we need to create one
+                                    unimplemented!()
+                                },
+                            );
+                        tool_call_updated = true;
+                    });
 
-        return (function_call_updated, content_updated);
+                // if we have a content delta, we need to update the content
+                let mut content_updated = false;
+                delta.content
+                    .ok_then_do(|content_delta| {
+                        msg.content.ok_then_do_otherwise_mut(|content| {
+                            // if the container message already has a content, we need to update the content
+                            content.push_str(content_delta.as_str());
+                        }, |content_option| {
+                            // if the container message does not have a content, we need to create one
+                            *content_option = Some(content_delta.clone());
+                        });
+                        content_updated = true;
+                    });
+
+                return (function_call_updated, content_updated);
+            }
+            _ => unreachable!("only assistant message will be streamed")
+        }
     }
 }
 
@@ -211,14 +242,18 @@ impl Conversation {
             function_call,
             temperature: config.temperature,
             top_p: config.top_p,
+            tools: None,
             n: config.n,
             stream: if stream { Some(true) } else { None },
             stop: config.stop,
             max_tokens: config.max_tokens,
             presence_penalty: config.presence_penalty,
+            response_format: None,
             frequency_penalty: config.frequency_penalty,
             logit_bias: config.logit_bias,
             user: config.user,
+            seed: None,
+            tool_choice: None,
         }
     }
 
@@ -243,11 +278,12 @@ impl Conversation {
     pub fn truncate_history(&mut self) {
         let mut max_tokens = *MODEL_TO_MAX_TOKENS.get(self.configs.model.as_str()).unwrap();
         let sys_prompt = self.history.first().and_then(|chat_msg| {
-            if chat_msg.msg.role == Role::System {
-                max_tokens -= self.tiktoken.count_msg_token(&chat_msg.msg);
-                Some(chat_msg)
-            } else {
-                None
+            match &chat_msg.msg {
+                ChatCompletionRequestMessage::System(prompt) => {
+                    max_tokens -= self.tiktoken.count_msg_token(&chat_msg.msg);
+                    Some(chat_msg)
+                }
+                _ => None,
             }
         });
         let truncate_start_idx = self.tiktoken.get_truncate_start_idx(&self.history.iter().map(|chat_msg| chat_msg.msg.clone()).collect(), max_tokens);
@@ -271,7 +307,7 @@ mod test {
     use anyhow::Result;
     use async_openai::Client;
     use async_openai::config::AzureConfig;
-    use async_openai::types::{ChatCompletionFunctionsArgs, ChatCompletionRequestMessageArgs, CreateChatCompletionRequestArgs, Role};
+    use async_openai::types::{ChatCompletionFunctionsArgs, ChatCompletionRequestAssistantMessageArgs, ChatCompletionRequestMessage, ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs, FinishReason, Role};
     use futures::StreamExt;
     use serde_json::json;
 
@@ -299,10 +335,9 @@ mod test {
         let request = CreateChatCompletionRequestArgs::default()
             .max_tokens(512u16)
             .model("gpt-3.5-turbo-0613")
-            .messages([ChatCompletionRequestMessageArgs::default()
-                .role(Role::User)
+            .messages([ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessageArgs::default()
                 .content("What's the weather like in Boston?")
-                .build()?])
+                .build()?)])
             .functions([ChatCompletionFunctionsArgs::default()
                 .name("get_current_weather")
                 .description("Get the current weather in a given location")
@@ -326,9 +361,10 @@ mod test {
         let mut fn_args = String::new();
         let mut function_called = false;
         let mut assistant_message = ChatMsg {
-            msg: ChatCompletionRequestMessageArgs::default()
-                .role(Role::Assistant)
-                .build()?,
+            msg: ChatCompletionRequestMessage::Assistant(
+                ChatCompletionRequestAssistantMessageArgs::default()
+                    .build()?
+            ),
             metadata: None,
         };
         while let Some(chunk) = stream.next().await {
@@ -351,7 +387,7 @@ mod test {
                                 .ok_then_do(|args| fn_args.push_str(args));
                         });
                     if let Some(finish_reason) = &chat_choice.finish_reason {
-                        if finish_reason == "function_call" {
+                        if *finish_reason == FinishReason::FunctionCall {
                             print_immediately("\nfunction called\n");
                             function_called = true;
                         }
@@ -367,8 +403,13 @@ mod test {
         }
         print_immediately(format!("fn_name: {}\nfn_args: {}\n", fn_name, fn_args));
 
-        assert_eq!(fn_name, assistant_message.msg.function_call.as_ref().unwrap().name.as_str());
-        assert_eq!(fn_args, assistant_message.msg.function_call.as_ref().unwrap().arguments.as_str());
+        match assistant_message.msg {
+            ChatCompletionRequestMessage::Assistant(msg) => {
+                assert_eq!(fn_name, msg.function_call.as_ref().unwrap().name.as_str());
+                assert_eq!(fn_args, msg.function_call.as_ref().unwrap().arguments.as_str());
+            }
+            _ => unreachable!()
+        }
 
         let fn_args: WeatherFunctionArguments = serde_json::from_str(fn_args.as_str())?;
         assert_eq!(fn_name, "get_current_weather");

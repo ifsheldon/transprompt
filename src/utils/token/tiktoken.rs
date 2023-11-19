@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use anyhow::Result;
-use async_openai::types::ChatCompletionRequestMessage;
+use async_openai::types::{ChatCompletionRequestMessage, ChatCompletionRequestUserMessageContent};
 pub use tiktoken_rs::{get_bpe_from_model, CoreBPE};
 
 use crate::utils::token::CountToken;
@@ -62,12 +62,22 @@ impl Tiktoken {
     ///
     /// TODO: use `tiktoken_rs::async_openai::get_chat_completion_max_tokens` when it adds newer model variants
     pub fn count_msg_token(&self, msg: &ChatCompletionRequestMessage) -> usize {
-        let mut token_count = msg.content.as_ref()
-            .and_then(|msg_string| Some(self.count_token(msg_string)))
-            .unwrap_or(0);
-        if msg.name.is_some() {
-            token_count += TOKENS_PER_NAME;
-        }
+        let mut token_count = match msg {
+            ChatCompletionRequestMessage::System(msg) => msg.content.as_ref().map_or(0, |msg| self.count_token(msg)),
+            ChatCompletionRequestMessage::User(msg) => msg.content.as_ref().map_or(0, |msg| {
+                match msg {
+                    ChatCompletionRequestUserMessageContent::Text(s) => self.count_token(s),
+                    ChatCompletionRequestUserMessageContent::Array(_) => todo!()
+                }
+            }),
+            ChatCompletionRequestMessage::Assistant(msg) => msg.content.as_ref().map_or(0, |msg| self.count_token(msg)),
+            ChatCompletionRequestMessage::Tool(_) => unimplemented!("tool message is not supported due to lack of details from OpenAI"),
+            ChatCompletionRequestMessage::Function(_) => unimplemented!("function message is not supported due to lack of details from OpenAI")
+        };
+        // TODO: count name tokens when it is supported again
+        // if msg.name.is_some() {
+        //     token_count += TOKENS_PER_NAME;
+        // }
         token_count += TOKENS_PER_MESSAGE;
         return token_count;
     }

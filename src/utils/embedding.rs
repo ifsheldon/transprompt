@@ -91,6 +91,7 @@ impl OpenAIEmbedding {
         let request = CreateEmbeddingRequest {
             model: self.embedding_model.clone(),
             input: EmbeddingInput::String(string.into()),
+            encoding_format: None,
             user: None,
         };
         let mut response = self.client.embeddings().create(request).await?;
