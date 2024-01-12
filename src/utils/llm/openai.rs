@@ -251,9 +251,11 @@ impl Conversation {
             response_format: None,
             frequency_penalty: config.frequency_penalty,
             logit_bias: config.logit_bias,
+            logprobs: None,
             user: config.user,
             seed: None,
             tool_choice: None,
+            top_logprobs: None,
         }
     }
 

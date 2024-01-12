@@ -63,13 +63,11 @@ impl Tiktoken {
     /// TODO: use `tiktoken_rs::async_openai::get_chat_completion_max_tokens` when it adds newer model variants
     pub fn count_msg_token(&self, msg: &ChatCompletionRequestMessage) -> usize {
         let mut token_count = match msg {
-            ChatCompletionRequestMessage::System(msg) => msg.content.as_ref().map_or(0, |msg| self.count_token(msg)),
-            ChatCompletionRequestMessage::User(msg) => msg.content.as_ref().map_or(0, |msg| {
-                match msg {
-                    ChatCompletionRequestUserMessageContent::Text(s) => self.count_token(s),
-                    ChatCompletionRequestUserMessageContent::Array(_) => todo!()
-                }
-            }),
+            ChatCompletionRequestMessage::System(msg) => self.count_token(msg.content.as_str()),
+            ChatCompletionRequestMessage::User(msg) => match &msg.content {
+                ChatCompletionRequestUserMessageContent::Text(s) => self.count_token(s),
+                ChatCompletionRequestUserMessageContent::Array(_) => todo!()
+            },
             ChatCompletionRequestMessage::Assistant(msg) => msg.content.as_ref().map_or(0, |msg| self.count_token(msg)),
             ChatCompletionRequestMessage::Tool(_) => unimplemented!("tool message is not supported due to lack of details from OpenAI"),
             ChatCompletionRequestMessage::Function(_) => unimplemented!("function message is not supported due to lack of details from OpenAI")

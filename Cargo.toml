@@ -38,7 +38,7 @@ tiktoken-rs = "0.5"
 
 [dependencies.async-openai]
 # for LLM
-version = "0.16.3"
+version = "0.18"
 git = "https://github.com/ifsheldon/async-openai.git"
 branch = "frontier"
 default-features = false
