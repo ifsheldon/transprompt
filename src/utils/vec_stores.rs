@@ -74,7 +74,7 @@ impl QdrantCloudDB {
         let points = points.into_iter()
             .map(|(v, m)| Self::create_point(v, m))
             .collect();
-        self.client.upsert_points(&self.collection, points, None).await.map(|_| ())
+        self.client.upsert_points(&self.collection, None, points, None).await.map(|_| ())
     }
 
     /// Search for the nearest k points to a given point.
@@ -93,6 +93,9 @@ impl QdrantCloudDB {
             vector_name: None,
             with_vectors: None,
             read_consistency: None,
+            timeout: None,
+            shard_key_selector: None,
+            sparse_indices: None,
         }).await.map(|response| response.result)
     }
 }
