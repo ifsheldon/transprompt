@@ -3,9 +3,8 @@ use std::fmt::{Debug, Display, Formatter};
 
 use async_openai::Client;
 use async_openai::error::OpenAIError;
-use async_openai::types::{ChatCompletionFunctionCall, ChatCompletionFunctions, ChatCompletionRequestMessage, ChatCompletionResponseStream, ChatCompletionStreamResponseDelta, CreateChatCompletionRequest, CreateChatCompletionResponse, FunctionCall, Stop};
+use async_openai::types::{ChatCompletionFunctionCall, ChatCompletionFunctions, ChatCompletionMessageToolCall, ChatCompletionRequestMessage, ChatCompletionResponseStream, ChatCompletionStreamResponseDelta, ChatCompletionToolType, CreateChatCompletionRequest, CreateChatCompletionResponse, FunctionCall, Stop};
 use serde::{Deserialize, Serialize};
-
 use crate::utils::helper_traits::{ThenDo, ThenDoMut};
 use crate::utils::JsonMap;
 use crate::utils::token::tiktoken::{MODEL_TO_MAX_TOKENS, Tiktoken};
@@ -124,24 +123,59 @@ impl ChatMsg {
                     });
 
                 let mut tool_call_updated = false;
-                // TODO: update tool calls
                 delta.tool_calls
                     .ok_then_do(|tool_call_deltas| {
-                        msg
-                            .tool_calls
+                        // TODO: test this
+                        msg.tool_calls
                             .ok_then_do_otherwise_mut(
                                 |tool_calls| {
                                     // if the container message already has a tool call, we need to update the tool call
                                     tool_call_deltas
                                         .iter()
                                         .for_each(|tool_call_delta| {
-                                            let tool_call = tool_calls.get_mut(tool_call_delta.index as usize);
-                                            unimplemented!()
-                                        })
+                                            let index = tool_call_delta.index as usize;
+                                            if let Some(tool_call) = tool_calls.get_mut(index) {
+                                                tool_call_delta.id.ok_then_do(|id| assert_eq!(id.as_str(), tool_call.id.as_str(), "Tool call id mismatch"));
+                                                tool_call_delta.function.ok_then_do(|function| {
+                                                    function.name.ok_then_do(|name| assert_eq!(name.as_str(), tool_call.function.name.as_str(), "Tool call function name mismatch"));
+                                                    function.arguments.ok_then_do(|args| tool_call.function.arguments.push_str(args));
+                                                });
+                                            } else {
+                                                log::error!("Impossible Tool call index out of bound: index={}", index);
+                                            }
+                                        });
                                 },
                                 |tool_calls_option| {
                                     // if the container message does not have a tool call, we need to create one
-                                    unimplemented!()
+                                    let max_index = tool_call_deltas.iter().map(|tool_call_delta| tool_call_delta.index).max().unwrap();
+                                    let tool_calls_num = max_index + 1;
+                                    let mut tool_calls = Vec::with_capacity(tool_calls_num as usize);
+                                    const PLACE_HOLDER: String = String::new();
+                                    for _ in 0..tool_calls_num {
+                                        tool_calls.push(ChatCompletionMessageToolCall {
+                                            id: PLACE_HOLDER.clone(),
+                                            r#type: ChatCompletionToolType::default(),
+                                            function: FunctionCall {
+                                                name: PLACE_HOLDER.clone(),
+                                                arguments: PLACE_HOLDER.clone(),
+                                            },
+                                        });
+                                    }
+                                    tool_call_deltas
+                                        .iter()
+                                        .for_each(|tool_call_delta| {
+                                            let index = tool_call_delta.index as usize;
+                                            if let Some(tool_call) = tool_calls.get_mut(index) {
+                                                tool_call_delta.id.ok_then_do(|id| tool_call.id = id.clone());
+                                                tool_call_delta.function.ok_then_do(|function| {
+                                                    function.name.ok_then_do(|name| tool_call.function.name = name.clone());
+                                                    function.arguments.ok_then_do(|arguments| tool_call.function.arguments = arguments.clone());
+                                                });
+                                            } else {
+                                                log::error!("Impossible Tool call index out of bound: index={}", index);
+                                            }
+                                        });
+                                    *tool_calls_option = Some(tool_calls);
                                 },
                             );
                         tool_call_updated = true;
