@@ -56,13 +56,11 @@ impl Tiktoken {
         }))
     }
 
-    /// Count the number of tokens in a chat message. Following best practices from the OpenAI exmaple.
+    /// Count the number of tokens in a chat message. Following best practices from the OpenAI example.
     ///
     /// Assuming the model is NOT the legacy `gpt-3.5-turbo-0301`
-    ///
-    /// TODO: use `tiktoken_rs::async_openai::get_chat_completion_max_tokens` when it adds newer model variants
     pub fn count_msg_token(&self, msg: &ChatCompletionRequestMessage) -> usize {
-        let mut token_count = match msg {
+        let content_token_count = match msg {
             ChatCompletionRequestMessage::System(msg) => self.count_token(msg.content.as_str()),
             ChatCompletionRequestMessage::User(msg) => match &msg.content {
                 ChatCompletionRequestUserMessageContent::Text(s) => self.count_token(s),
@@ -72,12 +70,13 @@ impl Tiktoken {
             ChatCompletionRequestMessage::Tool(_) => unimplemented!("tool message is not supported due to lack of details from OpenAI"),
             ChatCompletionRequestMessage::Function(_) => unimplemented!("function message is not supported due to lack of details from OpenAI")
         };
-        // TODO: count name tokens when it is supported again
-        // if msg.name.is_some() {
-        //     token_count += TOKENS_PER_NAME;
-        // }
-        token_count += TOKENS_PER_MESSAGE;
-        return token_count;
+        let name_token_count = match msg {
+            ChatCompletionRequestMessage::System(msg) if msg.name.is_some() => TOKENS_PER_NAME,
+            ChatCompletionRequestMessage::User(msg) if msg.name.is_some() => TOKENS_PER_NAME,
+            ChatCompletionRequestMessage::Assistant(msg) if msg.name.is_some() => TOKENS_PER_NAME,
+            _ => 0
+        };
+        return content_token_count + name_token_count + TOKENS_PER_MESSAGE;
     }
 
     #[inline]
