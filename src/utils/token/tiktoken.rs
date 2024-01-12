@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 use anyhow::Result;
-use async_openai::types::{ChatCompletionRequestMessage, ChatCompletionRequestUserMessageContent};
+use async_openai::types::{ChatCompletionRequestMessage, ChatCompletionRequestMessageContentPart, ChatCompletionRequestUserMessageContent};
 pub use tiktoken_rs::{get_bpe_from_model, CoreBPE};
+use log::warn;
 
 use crate::utils::token::CountToken;
 use lazy_static::lazy_static;
@@ -64,7 +65,19 @@ impl Tiktoken {
             ChatCompletionRequestMessage::System(msg) => self.count_token(msg.content.as_str()),
             ChatCompletionRequestMessage::User(msg) => match &msg.content {
                 ChatCompletionRequestUserMessageContent::Text(s) => self.count_token(s),
-                ChatCompletionRequestUserMessageContent::Array(_) => todo!()
+                ChatCompletionRequestUserMessageContent::Array(msg_parts) =>
+                    msg_parts
+                        .iter()
+                        .map(|msg_part| {
+                            match msg_part {
+                                ChatCompletionRequestMessageContentPart::Text(text_part) => self.count_token(text_part.text.as_str()),
+                                ChatCompletionRequestMessageContentPart::Image(_) => {
+                                    warn!("Image message is not supported because we need to know the image size after fetching from the url");
+                                    0
+                                }
+                            }
+                        })
+                        .sum()
             },
             ChatCompletionRequestMessage::Assistant(msg) => msg.content.as_ref().map_or(0, |msg| self.count_token(msg)),
             ChatCompletionRequestMessage::Tool(_) => unimplemented!("tool message is not supported due to lack of details from OpenAI"),
