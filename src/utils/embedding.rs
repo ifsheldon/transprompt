@@ -1,7 +1,7 @@
 use anyhow::Result;
-use async_openai::Client;
-use async_openai::types::{CreateEmbeddingRequest, EmbeddingUsage};
-use async_openai::types::EmbeddingInput;
+use async_openai_wasm::Client;
+use async_openai_wasm::types::{CreateEmbeddingRequest, EmbeddingUsage};
+use async_openai_wasm::types::EmbeddingInput;
 use async_trait::async_trait;
 
 /// Vector of floats representing an embedding.
@@ -93,6 +93,7 @@ impl OpenAIEmbedding {
             input: EmbeddingInput::String(string.into()),
             encoding_format: None,
             user: None,
+            dimensions: None,
         };
         let mut response = self.client.embeddings().create(request).await?;
         let emb = response.data.pop().unwrap().embedding;

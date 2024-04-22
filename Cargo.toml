@@ -10,7 +10,7 @@ homepage = "https://github.com/ifsheldon/transprompt"
 
 [package]
 name = "transprompt"
-version = "0.11.0"
+version = "0.12.0-beta"
 edition.workspace = true
 authors.workspace = true
 license-file.workspace = true
@@ -35,22 +35,14 @@ termimad = { version = "0.27", optional = true }
 qdrant-client = { version = "~1.7", optional = true }
 # Token related
 tiktoken-rs = "0.5"
-
-[dependencies.async-openai]
-# for LLM
-version = "0.18"
-git = "https://github.com/ifsheldon/async-openai.git"
-branch = "frontier"
-default-features = false
-
+async-openai-wasm = "0.20.0-experimental"
 
 [dev-dependencies]
-tokio = { version = "1.32", features = ["full"] }
+tokio = { version = "1.35", features = ["full"] }
 futures = "0.3"
 ctrlc = "3.4"
 
 [features]
-default = ["terminal_printing", "async-openai/default", "qdrant"]
+default = ["terminal_printing", "qdrant"]
 terminal_printing = ["termimad"]
-wasm = ["async-openai/wasm"]
 qdrant = ["qdrant-client"]

@@ -97,7 +97,7 @@
 //!
 
 
-pub use async_openai;
+pub use async_openai_wasm;
 
 pub mod prompt;
 pub mod filler;

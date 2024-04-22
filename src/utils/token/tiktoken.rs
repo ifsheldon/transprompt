@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use anyhow::Result;
-use async_openai::types::{ChatCompletionRequestMessage, ChatCompletionRequestMessageContentPart, ChatCompletionRequestUserMessageContent};
+use async_openai_wasm::types::{ChatCompletionRequestMessage, ChatCompletionRequestMessageContentPart, ChatCompletionRequestUserMessageContent};
 pub use tiktoken_rs::{get_bpe_from_model, CoreBPE};
 use log::warn;
 
