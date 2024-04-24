@@ -314,7 +314,7 @@ impl Conversation {
         let mut max_tokens = *MODEL_TO_MAX_TOKENS.get(self.configs.model.as_str()).unwrap();
         let sys_prompt = self.history.first().and_then(|chat_msg| {
             match &chat_msg.msg {
-                ChatCompletionRequestMessage::System(prompt) => {
+                ChatCompletionRequestMessage::System(_prompt) => {
                     max_tokens -= self.tiktoken.count_msg_token(&chat_msg.msg);
                     Some(chat_msg)
                 }
