@@ -18,13 +18,13 @@ repository.workspace = true
 homepage.workspace = true
 readme = "README.md"
 description = "Prompt-centric framework for developing LLM applications in Rust"
+rust-version = "1.80.0"
 
 [dependencies]
 serde_json = "~1.0"
 serde = { version = "1.0", features = ["derive"] }
 regex = "1"
-lazy_static = "1.4.0"
-async-trait = "0.1.68"
+async-trait = "0.1"
 log = "0.4"
 anyhow = "~1.0"
 url = "~2.5"

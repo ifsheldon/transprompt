@@ -1,14 +1,11 @@
 use std::collections::{HashMap, HashSet};
-
-use lazy_static::lazy_static;
+use std::sync::LazyLock;
 use regex::{Captures, Regex};
 
-lazy_static! {
-    /// Regex to match placeholders. The pattern matches antyhing between "{{" and "}}". No new line is allowed in the placeholder name.
-    ///
-    /// TODO: when `LazyCell` is stabilized, use that instead
-    pub(crate) static ref PLACEHOLDER_MATCH_RE: Regex = Regex::new(r"\{\{.*?\}\}").unwrap();
-}
+pub const PLACEHOLDER_MATCH_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"\{\{.*?\}\}").unwrap()
+});
+
 
 #[inline]
 pub(crate) fn strip_format(key: &str) -> &str {

@@ -1,19 +1,17 @@
 use std::collections::HashMap;
+use std::sync::LazyLock;
 use anyhow::Result;
 use async_openai_wasm::types::{ChatCompletionRequestMessage, ChatCompletionRequestMessageContentPart, ChatCompletionRequestUserMessageContent};
 pub use tiktoken_rs::{get_bpe_from_model, CoreBPE};
 use log::warn;
 
 use crate::utils::token::CountToken;
-use lazy_static::lazy_static;
 
 const TOKENS_PER_MESSAGE: usize = 3;
 const TOKENS_PER_NAME: usize = 1;
 
-lazy_static! {
-    /// const map from model name to max tokens.
-    /// TODO: when `LazyCell` is stabilized, use that instead
-    pub static ref MODEL_TO_MAX_TOKENS: HashMap<&'static str, usize> = HashMap::from([
+pub const MODEL_TO_MAX_TOKENS: LazyLock<HashMap<&'static str, usize>> = LazyLock::new(|| {
+    HashMap::from([
         ("gpt-4", 8192),
         ("gpt-4-0613", 8192),
         ("gpt-4-32k", 32768),
@@ -22,8 +20,9 @@ lazy_static! {
         ("gpt-3.5-turbo-16k", 16384),
         ("gpt-3.5-turbo-0613", 4096),
         ("gpt-3.5-turbo-16k-0613", 16384),
-    ]);
-}
+    ])
+});
+
 
 /// Counter using the Tiktoken tokenizer.
 #[derive(Clone)]
