@@ -57,6 +57,8 @@ impl QdrantCloudDB {
                     hnsw_config: None,
                     quantization_config: None,
                     on_disk: None,
+                    datatype: None,
+                    multivector_config: None,
                 }))
             }),
             ..Default::default()
