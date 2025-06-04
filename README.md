@@ -9,7 +9,7 @@ Prompt-centric framework for developing LLM applications in Rust
 To use it, add a dependency in `Cargo.toml`
 
 ```toml
-transprompt = 0.14
+transprompt = "0.14"
 ```
 
 ## Documentation
