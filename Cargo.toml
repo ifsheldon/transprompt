@@ -35,10 +35,9 @@ qdrant-client = { version = "1.11", optional = true }
 # Token related
 tiktoken-rs = "0.7"
 async-openai-wasm = "=0.28.3-experimental"
-pulldown-cmark = { version = "0.13", default-features = false }
 
 [dev-dependencies]
-tokio = { version = "1.39", features = ["full"] }
+tokio = { version = "1.45", features = ["full"] }
 futures = "0.3"
 ctrlc = "3.4"
 
