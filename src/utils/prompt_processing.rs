@@ -70,7 +70,6 @@ mod string_tests {
             ("a".to_string(), Some("alice".to_string())),
             ("b".to_string(), Some("bob".to_string())),
         ]);
-
-        assert_eq!("alice and bob and alice", unsafe { replace_all_placeholders(string, &mapping).as_str() });
+        assert_eq!("alice and bob and alice", unsafe { replace_all_placeholders(string, &mapping) });
     }
 }
